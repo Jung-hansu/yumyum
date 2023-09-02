@@ -212,3 +212,4 @@ cython_debug/
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/django,visualstudiocode,backup,git
+my_settings.py
