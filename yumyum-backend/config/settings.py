@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+from .my_settings import MY_SECRET, MY_DATABASES
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-f9xe+wia_8in%ddtxw7m4q=4jd+ckmaek_&wjn9%&@my^hd0(4"
+SECRET_KEY = MY_SECRET
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,7 +38,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "users",
 ]
 
 MIDDLEWARE = [
@@ -74,16 +74,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.contrib.gis.db.backends.postgis",
-        "NAME": "yumyum",
-        "USER": "root",
-        "PASSWORD": "yumyum1234",
-        "HOST": "yumyum.cm3ah7zzqkkw.ap-northeast-2.rds.amazonaws.com",
-        "PORT": "5432",
-    }
-}
+DATABASES = MY_DATABASES
 
 
 # Password validation
