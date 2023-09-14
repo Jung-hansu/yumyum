@@ -12,7 +12,8 @@
 *.log
 *.pot
 *.pyc
-yumyum-backend/config/__pycache__/
+yumyum-backend/config/__pycache__/*.pyc
+.DS_Store
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
