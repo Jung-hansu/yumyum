@@ -40,8 +40,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.gis",
-	"reviewManagement",
-	"users",
+	"reviewManagement.apps.ReviewmanagementConfig",
+	"users.apps.UsersConfig",
 ]
 
 MIDDLEWARE = [
