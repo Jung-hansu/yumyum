@@ -1,9 +1,9 @@
 from django.shortcuts import render, HttpResponse
-from reviewManagement import models
+from reviews.models import Review
 
 # Create your views here.
 def starAverage(request):
-    reviews = models.Review.objects.all() # 테이블 전체 데이터 가져옴
+    reviews = Review.objects.all() # 테이블 전체 데이터 가져옴
     data = reviews.values('stars') # 그 중 stars 값만 딕셔너리형으로 가져옴
 
     sum = 0

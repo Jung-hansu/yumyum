@@ -33,6 +33,10 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+	"reviews.apps.ReviewsConfig",
+	"users.apps.UsersConfig",
+	"restaurants.apps.RestaurantsConfig",
+	"waitings.apps.WaitingsConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -40,8 +44,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.gis",
-	"reviewManagement.apps.ReviewmanagementConfig",
-	"users.apps.UsersConfig",
 ]
 
 MIDDLEWARE = [

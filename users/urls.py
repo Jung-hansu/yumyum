@@ -1,8 +1,11 @@
 from django.contrib import admin
 from django.urls import path
-from users import views
+from users.views import *
 
 urlpatterns = [
-    path('', views.login),
-    path('signup/', views.createusers),
+    path('login/', login),
+    path('logout/', logout),
+    path('signup/', createusers),
+    # path('{user_id}', ), #?
+    # path('threads/', ),
 ]
