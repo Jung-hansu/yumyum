@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-from config.my_settings import MY_SECRET, MY_DATABASES
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -22,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = MY_SECRET
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -33,10 +32,10 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-	"reviews.apps.ReviewsConfig",
-	"users.apps.UsersConfig",
-	"restaurants.apps.RestaurantsConfig",
-	"waitings.apps.WaitingsConfig",
+    "reviews.apps.ReviewsConfig",
+    "users.apps.UsersConfig",
+    "restaurants.apps.RestaurantsConfig",
+    "waitings.apps.WaitingsConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -80,7 +79,16 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = MY_DATABASES
+DATABASES = {
+    "default": {
+        "ENGINE": "django.contrib.gis.db.backends.postgis",
+        "NAME": os.environ["DB_NAME"],
+        "USER": os.environ["DB_USER"],
+        "PASSWORD": os.environ["DB_PASSWORD"],
+        "HOST": os.environ["DB_HOST"],
+        "PORT": os.environ["DB_PORT"],
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -123,7 +131,15 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-if os.name == 'nt':
-	VIRTUAL_ENV_BASE = os.environ['VIRTUAL_ENV']
-	os.environ['PATH'] = os.path.join(VIRTUAL_ENV_BASE, r'.\Lib\site-packages\osgeo') + ';' + os.environ['PATH']
-	os.environ['PROJ_LIB'] = os.path.join(VIRTUAL_ENV_BASE, r'.\Lib\site-packages\osgeo\data\proj') + ';' + os.environ['PATH']
+if os.name == "nt":
+    VIRTUAL_ENV_BASE = os.environ["VIRTUAL_ENV"]
+    os.environ["PATH"] = (
+        os.path.join(VIRTUAL_ENV_BASE, r".\Lib\site-packages\osgeo")
+        + ";"
+        + os.environ["PATH"]
+    )
+    os.environ["PROJ_LIB"] = (
+        os.path.join(VIRTUAL_ENV_BASE, r".\Lib\site-packages\osgeo\data\proj")
+        + ";"
+        + os.environ["PATH"]
+    )
