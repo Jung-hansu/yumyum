@@ -26,7 +26,7 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["yumyum-backend-ff68391425b9.herokuapp.com"]
+ALLOWED_HOSTS = ["yumyum-backend-ff68391425b9.herokuapp.com","*"]
 
 
 # Application definition
