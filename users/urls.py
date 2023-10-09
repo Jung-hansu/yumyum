@@ -4,9 +4,9 @@ from users.views import *
 
 urlpatterns = [
     path('', index),
+    path('signup/', signup),
     path('login/', login),
     path('logout/', logout),
-    path('signup/', signup),
-    # path('{user_id}', ), #?
+    # path('{user_id}', index),
     # path('threads/', ),
 ]
