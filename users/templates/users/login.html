@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<h1>로그인 페이지</h1>
+<br>
+{% if user.is_authenticated %}
+    로그인 성공
+    {{ user.username }}님 환영합니다. 
+    <a href="">로그아웃</a>
+{% else %}
+    <form action="" method="POST"> 
+        {% csrf_token %}
+        <a>id:&ensp;&nbsp;</a>
+        <input name="id" type="text">
+        <br>
+        <a>pw:&nbsp;</a>
+        <input name="pw" type="password">
+        <input type="submit" value="로그인">
+    </form>
+{% endif %}

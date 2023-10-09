@@ -5,7 +5,7 @@ from users.views import *
 urlpatterns = [
     path('login/', login),
     path('logout/', logout),
-    path('signup/', createusers),
+    path('signup/', signup),
     # path('{user_id}', ), #?
     # path('threads/', ),
 ]
