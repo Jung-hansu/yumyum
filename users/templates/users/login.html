@@ -1,21 +1,27 @@
 <!DOCTYPE html>
-<h1>로그인 페이지</h1>
-<br>
-{% if user.is_authenticated %}
-    로그인 성공
-    {{ user.username }}님 환영합니다.
-    <a href="users/index">홈</a>
-    <a href="users/login">로그아웃</a>
-{% else %}
-    <form action="" method="POST"> 
-        {% csrf_token %}
-        <a>id:&ensp;&nbsp;</a>
-        <input name="id" type="text">
-        <br>
-        <a>pw:&nbsp;</a>
-        <input name="pw" type="password">
-        <input type="submit" value="로그인">
-    </form>
+<head>
+    <title>로그인</title>
+</head>
+
+<body>
+    <h1>로그인 페이지</h1>
     <br>
-    <a href="/users">홈으로</a>
-{% endif %}
+    {% if is_authenticated %}
+        로그인 성공!<br>
+        {{ user.name }}님 환영합니다.<br>
+        <a href="/users/">홈</a><br>
+        <a href="/users/login">로그아웃</a>
+    {% else %}
+        {% if wrong_input %}
+            잘못된 입력입니다.
+        {% endif %}
+        <form action="" method="POST"> 
+            {% csrf_token %}
+            <a>id: <input name="id" type="text"></a><br>
+            <a>pw: <input name="pw" type="password"></a>
+            <input type="submit" value="로그인">
+        </form>
+        <br><a href="/users">홈으로</a>
+        <br><a href="/users/signup">회원가입</a>
+    {% endif %}
+</body>

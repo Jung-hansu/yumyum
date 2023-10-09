@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<head>
+    <title>회원가입</title>
+</head>
+
+<body>
+    <h1>회원가입 페이지</h1>
+    <br>
+    {% if is_exist %}
+        <a>이미 존재하는 회원입니다!</a>
+    {% endif %}
+    <form action="" method="POST"> 
+        {% csrf_token %}
+        <a>name</a><br>&nbsp;                <input name="name" type="text">
+        <br><a>phone number</a><br>&nbsp;    <input name="phone_number" type="text">
+        <br><a>id</a><br>&nbsp;  <input name="id" type="text">
+        <br><a>pw</a><br>&nbsp;        <input name="pw" type="password">
+        <input type="submit" value="가입">
+    </form>
+    <br><a href="/users">홈으로</a>
+<br><a href="/users/login">로그인</a>
+</body>
