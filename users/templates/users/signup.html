@@ -11,10 +11,7 @@
     {% endif %}
     <form action="" method="POST"> 
         {% csrf_token %}
-        <a>name</a><br>&nbsp;                <input name="name" type="text">
-        <br><a>phone number</a><br>&nbsp;    <input name="phone_number" type="text">
-        <br><a>id</a><br>&nbsp;  <input name="id" type="text">
-        <br><a>pw</a><br>&nbsp;        <input name="pw" type="password">
+        {{ form.as_p }}
         <input type="submit" value="가입">
     </form>
     <br><a href="/users/login">로그인</a>
