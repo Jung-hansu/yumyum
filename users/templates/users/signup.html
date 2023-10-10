@@ -6,9 +6,11 @@
 <body>
     <h1>회원가입 페이지</h1>
     <br>
+
     {% if is_exist %}
         <a>이미 존재하는 회원입니다!</a>
     {% endif %}
+
     <form action="" method="POST"> 
         {% csrf_token %}
         {{ form.as_p }}

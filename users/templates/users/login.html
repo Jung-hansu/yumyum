@@ -6,12 +6,12 @@
 <body>
     <h1>로그인 페이지</h1>
     <br>
-    {% if is_authenticated %}
+    {% if user.is_authenticated %}
         로그인 성공!<br>
         {{ user.name }}님 환영합니다.<br>
         전화번호는 {{ user.phone_number }}이시군요<br>
         아이디가 {{ user.id }}이고<br>
-        비밀번호가 {{ user.pw }}시네요<br>
+        비밀번호가 {{ user.password }}시네요<br>
         <a href="/users/">홈</a><br>
         <a href="/users/login">로그아웃</a>
     {% else %}
@@ -20,8 +20,7 @@
         {% endif %}
         <form action="" method="POST"> 
             {% csrf_token %}
-            <a>id: <input name="id" type="text"></a><br>
-            <a>pw: <input name="pw" type="password"></a>
+            {{ form.as_p }}
             <input type="submit" value="로그인">
         </form>
         <br><a href="/users/signup">회원가입</a>
