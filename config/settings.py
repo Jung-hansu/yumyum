@@ -147,3 +147,10 @@ if os.name == "nt":
 
 GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH")
 GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH")
+
+# User - session 관련 settings
+AUTH_USER_MODEL = 'users.User'  # authenticate() 인증기준 설정
+# 디폴트 백엔드 설정 필요
+# AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend',]
+ACCOUNT_SESSION_REMEMBER = True # 창 종료해도 세션 유지
+SESSION_COOKIE_AGE = 3600       # 세션 유지 시간 1시간

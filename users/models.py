@@ -34,15 +34,15 @@ class UserManager(BaseUserManager):
     
 class User(AbstractBaseUser):
     user_id = models.AutoField(primary_key=True)
-    last_login = models.DateTimeField(blank=True, null=True)
+    # last_login = models.DateTimeField(blank=True, null=True)
     name = models.CharField()
     phone_number = models.CharField(max_length=11)
     id = models.CharField(db_column='ID', max_length=30, blank=True, null=True)  # Field name made lowercase.
-    password = models.CharField(db_column='password', blank=True, null=True)  # Field name made lowercase.
+    # password = models.CharField(db_column='password', blank=True, null=True)  # Field name made lowercase.
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    USERNAME_FIELD = 'name'
+    USERNAME_FIELD = 'user_id'
     objects = UserManager()
 
     class Meta:
