@@ -6,20 +6,41 @@
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.contrib.gis.db import models
-from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
-class User(AbstractBaseUser, models.Model):
+# User 클래스에서 사용할 사용자 생성, 관리 및 인증과 관련된 메소드 정의
+class UserManager(BaseUserManager):
+    def create_user(self, name, password=None):
+        if not name:
+            raise ValueError("The Name field must be set")
+
+        user = self.model(name=name)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, name, password):
+        user = self.create_user(name, password)
+        user.is_admin = True
+        user.save(using=self._db)
+        return user
+    
+class User(AbstractBaseUser):
     user_id = models.AutoField(primary_key=True)
     name = models.CharField()
     phone_number = models.CharField(max_length=11)
     id = models.CharField(db_column='ID', max_length=30, blank=True, null=True)  # Field name made lowercase.
     pw = models.CharField(db_column='PW', blank=True, null=True)  # Field name made lowercase.
-    created_at = models.DateTimeField(blank=True, null=True)
-    updated_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    USERNAME_FIELD = 'name'
+    objects = UserManager()
 
     class Meta:
         managed = False
         db_table = 'User'
+
 
 
 class AuthGroup(models.Model):

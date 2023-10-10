@@ -7,8 +7,8 @@ class WaitingUser(models.Model):
     user = models.ForeignKey(User, models.DO_NOTHING)
     restaurant = models.ForeignKey(Restaurant, models.DO_NOTHING)
     position = models.IntegerField()
-    created_at = models.DateTimeField(blank=True, null=True)
-    updated_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         managed = False

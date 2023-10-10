@@ -3,8 +3,8 @@ from django.contrib.gis.db import models
 class Manager(models.Model):
     manager_id = models.AutoField(primary_key=True)
     restaurant_id = models.IntegerField(unique=True)
-    created_at = models.DateTimeField(blank=True, null=True)
-    updated_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         managed = False
@@ -18,8 +18,8 @@ class OperatingHours(models.Model):
     start_time = models.DateTimeField(blank=True, null=True)
     end_time = models.DateTimeField(blank=True, null=True)
     etc_reason = models.TextField(blank=True, null=True)  # This field type is a guess.
-    created_at = models.DateField()
-    updated_at = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         managed = False
@@ -33,8 +33,8 @@ class Restaurant(models.Model):
     longitude = models.DecimalField(max_digits=65535, decimal_places=65535)
     latitude = models.DecimalField(max_digits=65535, decimal_places=65535)
     waiting = models.IntegerField(blank=True, null=True)
-    created_at = models.DateTimeField(blank=True, null=True)
-    updated_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         managed = False
