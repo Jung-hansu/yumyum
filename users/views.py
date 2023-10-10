@@ -1,5 +1,5 @@
-from django.shortcuts import render, redirect, HttpResponse
-from django.contrib.auth import login as auth_login, logout as auth_logout
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from .models import User
 from datetime import datetime
 
@@ -38,12 +38,12 @@ def login(request):
     if request.method == "POST":
         id = request.POST.get('id')
         pw = request.POST.get('pw')
-        user = my_authenticate(id=id, pw=pw)
+        user = authenticate(id=id, pw=pw)
         if user is not None:
             # 페이크 로그인임. 세션 기능 추가해야함
-            # auth_login(request, user)
-            return redirect('/users', {'is_authenticated':True, 'user':user})
-            return render(request, 'users/index.html', {'is_authenticated':True, 'user':user})
+            auth_login(request, user)
+            # return redirect('/users', {'is_authenticated':True, 'user':user})
+            return render(request, 'users/login.html', {'is_authenticated':True, 'user':user})
         wrong_input = True
     return render(request, 'users/login.html', {'wrong_input':wrong_input})
 
@@ -54,6 +54,6 @@ def my_authenticate(id, pw):
     return None
 
 def logout(request):
-    # auth_logout(request)
+    auth_logout(request)
     # return redirect('users:login')
     return render(request, 'users/index.html', {'is_authenticated':False})

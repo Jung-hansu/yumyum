@@ -9,6 +9,9 @@
     {% if is_authenticated %}
         로그인 성공!<br>
         {{ user.name }}님 환영합니다.<br>
+        전화번호는 {{ user.phone_number }}이시군요<br>
+        아이디가 {{ user.id }}이고<br>
+        비밀번호가 {{ user.pw }}시네요<br>
         <a href="/users/">홈</a><br>
         <a href="/users/login">로그아웃</a>
     {% else %}
@@ -21,7 +24,7 @@
             <a>pw: <input name="pw" type="password"></a>
             <input type="submit" value="로그인">
         </form>
-        <br><a href="/users">홈으로</a>
         <br><a href="/users/signup">회원가입</a>
+        <br><a href="/users">홈으로</a>
     {% endif %}
 </body>
