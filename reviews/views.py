@@ -1,7 +1,14 @@
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import render, HttpResponse, HttpResponseRedirect, get_object_or_404
+from restaurants.models import Restaurant
 from reviews.models import Review
 
 # Create your views here.
+def info(request, restaurant_id):
+    if restaurant_id is not None:
+        name = get_object_or_404(Restaurant, pk = restaurant_id) #Restaurant 가져오기
+        return render(request, 'reviews.html', {'name':name})
+    return HttpResponseRedirect('/reviews/list/')
+
 def starAverage(request):
     reviews = Review.objects.all() # 테이블 전체 데이터 가져옴
     data = reviews.values('stars') # 그 중 stars 값만 딕셔너리형으로 가져옴

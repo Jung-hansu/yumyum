@@ -27,7 +27,7 @@ class OperatingHours(models.Model):
 
 
 class Restaurant(models.Model):
-    restaurant = models.OneToOneField(OperatingHours, models.DO_NOTHING, primary_key=True)
+    restaurant_id = models.OneToOneField(OperatingHours, models.DO_NOTHING, primary_key=True)
     name = models.CharField(max_length=30)
     category = models.CharField(max_length=30)
     longitude = models.DecimalField(max_digits=65535, decimal_places=65535)
