@@ -10,27 +10,35 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
 # User 클래스에서 사용할 사용자 생성, 관리 및 인증과 관련된 메소드 정의
 class UserManager(BaseUserManager):
-    def create_user(self, name, password=None):
-        if not name:
+    def create_user(self, name, phone_number, id, password=None):
+        if not (name):
             raise ValueError("The Name field must be set")
+        if not (phone_number):
+            raise ValueError("The Phone Number field must be set")
+        if not (id):
+            raise ValueError("The ID field must be set")
+        for user in User.objects.all():
+            if phone_number == user.phone_number or (id == user.id and password == user.password):
+                return None
 
-        user = self.model(name=name)
+        user = self.model(name=name, phone_number=phone_number, id=id)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, name, password):
-        user = self.create_user(name, password)
+    def create_superuser(self, name, phone_number, id, password):
+        user = self.create_user(name, phone_number, id, password)
         user.is_admin = True
         user.save(using=self._db)
         return user
     
 class User(AbstractBaseUser):
     user_id = models.AutoField(primary_key=True)
+    last_login = models.DateTimeField(blank=True, null=True)
     name = models.CharField()
     phone_number = models.CharField(max_length=11)
     id = models.CharField(db_column='ID', max_length=30, blank=True, null=True)  # Field name made lowercase.
-    pw = models.CharField(db_column='PW', blank=True, null=True)  # Field name made lowercase.
+    password = models.CharField(db_column='password', blank=True, null=True)  # Field name made lowercase.
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
