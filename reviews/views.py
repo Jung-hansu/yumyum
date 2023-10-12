@@ -14,7 +14,7 @@ def write_review(request, restaurant_id):
     if request.mehod == 'POST':
         form = ReviewForm(request.POST)
         if form.is_valid():
-            new_name = form.save() #변수 설정
+            new_name = form.save() #변수 설정 여기까지 일단 함
         return redirect('restaurant-info', id = restaurant_id)
     name = get_object_or_404(Restaurant, pk = restaurant_id)
     form = ReviewForm(initial={'restaurant':name})
