@@ -32,10 +32,6 @@ ALLOWED_HOSTS = ["yumyum-backend-ff68391425b9.herokuapp.com","*"]
 # Application definition
 
 INSTALLED_APPS = [
-    "reviews.apps.ReviewsConfig",
-    "users.apps.UsersConfig",
-    "restaurants.apps.RestaurantsConfig",
-    "waitings.apps.WaitingsConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -43,6 +39,12 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.gis",
+    "reviews.apps.ReviewsConfig",
+    "users.apps.UsersConfig",
+    "restaurants.apps.RestaurantsConfig",
+    "waitings.apps.WaitingsConfig",
+    "rest_framework",
+    "rest_framework.authtoken",
 ]
 
 MIDDLEWARE = [
@@ -149,8 +151,12 @@ GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH")
 GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH")
 
 # User - session 관련 settings
-AUTH_USER_MODEL = 'users.User'  # authenticate() 인증기준 설정
-# 디폴트 백엔드 설정 필요
-# AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend',]
 ACCOUNT_SESSION_REMEMBER = True # 창 종료해도 세션 유지
 SESSION_COOKIE_AGE = 3600       # 세션 유지 시간 1시간
+
+# 커스텀 User 모델을 장고 디폴트 User 모델로 설정
+AUTH_USER_MODEL = 'users.User'
+
+LOGIN_URL = "/users/login/"
+LOGIN_REDIRECT_URL = "/users/profile/"
+LOGOUT_REDIRECT_URL = None
