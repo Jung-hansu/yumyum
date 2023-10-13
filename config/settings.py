@@ -157,6 +157,7 @@ SESSION_COOKIE_AGE = 3600       # 세션 유지 시간 1시간
 # 커스텀 User 모델을 장고 디폴트 User 모델로 설정
 AUTH_USER_MODEL = 'users.User'
 
+SIGNUP_URL = "/users/signup/"
 LOGIN_URL = "/users/login/"
 LOGIN_REDIRECT_URL = "/users/profile/"
 LOGOUT_REDIRECT_URL = None

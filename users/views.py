@@ -1,3 +1,7 @@
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
+
 from django.shortcuts import render, redirect, HttpResponse
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from .models import User
@@ -7,18 +11,21 @@ from .forms import UserForm, LoginForm
 def index(request):
     return render(request, 'users/index.html')
 
-def signup(request):
-    if request.method == "POST":
+class SignupView(APIView):
+    def get(self, request):
+        form = UserForm()
+        return render(request, 'users/signup.html', {'form': form})
+    
+    def post(self, request):
         form = UserForm(request.POST)
         if form.is_valid():
-            # User.objects.create() 이거 잘 보기
             new_user = User.objects.create_user(**form.cleaned_data)
             if new_user is None:
                 return render(request, 'users/signup.html', {'is_exist':True})
-            auth_login(request, new_user)
-            return redirect('/users')
-    form = UserForm()
-    return render(request, 'users/signup.html', {'form': form})
+            
+            token = Token.objects.create(user=new_user)
+            return Response({"Token":token.key})
+            # return redirect('/users')/
 
 def login(request):
     wrong_input = False

@@ -8,7 +8,8 @@
 from django.contrib.gis.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
-# User 클래스에서 사용할 사용자 생성, 관리 및 인증과 관련된 메소드 정의
+
+# User 클래스에서 사용할 유저데이터 매니지먼트 클래스
 class UserManager(BaseUserManager):
     def create_user(self, name, phone_number, id, password=None):
         if not (name):
@@ -50,6 +51,12 @@ class User(AbstractBaseUser):
 
 
 
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    
+
+
+## 아래는 쓰이지 않는(다고 추정되는) 모델들
 class AuthGroup(models.Model):
     name = models.CharField(unique=True, max_length=150)
 
