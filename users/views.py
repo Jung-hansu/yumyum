@@ -1,4 +1,4 @@
-from rest_framework.views import APIView
+from rest_framework.views import APIView, Http404
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 
@@ -12,38 +12,45 @@ def index(request):
     return render(request, 'users/index.html')
 
 class SignupView(APIView):
-    def get(self, request):
-        form = UserForm()
-        return render(request, 'users/signup.html', {'form': form})
+    # def get(self, request):
+    #     form = UserForm()
+    #     return render(request, 'users/signup.html', {'form': form})
     
     def post(self, request):
         form = UserForm(request.POST)
+        new_user = None
         if form.is_valid():
             new_user = User.objects.create_user(**form.cleaned_data)
             if new_user is None:
-                return render(request, 'users/signup.html', {'is_exist':True})
+                return Http404("User already exists.")
+                # return render(request, 'users/signup.html', {'is_exist':True})
             
-            token = Token.objects.create(user=new_user)
-            return Response({"Token":token.key})
-            # return redirect('/users')/
+        token, created = Token.objects.get_or_create(user=new_user)
+        return Response({"Token":token.key})
+        # return redirect('/users')/
 
-def login(request):
-    wrong_input = False
-    if request.method == "POST":
-        id = request.POST.get('id')
-        password = request.POST.get('password')
+class LoginView(APIView):
+    # def get(self, request):
+    #     form = LoginForm()
+
+    def post(self, request):
+        form = LoginForm()
+        # id = request.POST.get('id')
+        # password = request.POST.get('password')
+        return HttpResponse(form.data['id'])
+        user = authenticate(request, username=form.data['id'], password=form.data['password'])
+        if user is None:
+            return Http404("Wrong input")
         
-        # 이거 작동 안해서 인증 직접 구현함
-        user = authenticate(request, username=id, password=password)
+        auth_login(request, user)
 
-        if user is not None:
-            auth_login(request, user)
-            return redirect('/users')
-        wrong_input = True
-    form = LoginForm()
-    # wrong_input은 추후 삭제
-    return render(request, 'users/login.html', {'wrong_input':wrong_input, 'form':form})
+        token = Token.objects.get(user=user)
+        return Response({"Token":token.key})
+        # return render(request, 'users/login.html', {'form':form})
 
-def logout(request):
-    auth_logout(request)
-    return redirect('/users')
+class LogoutView(APIView):
+    def get(self, request):
+        auth_logout(request)
+        token = Token.get(request)
+        return Response({"Token":token.key})
+        return redirect('/users')
