@@ -21,32 +21,26 @@ class SignupView(APIView):
             if new_user is None:
                 return Response({"error":"User already exists"}, status=status.HTTP_400_BAD_REQUEST)
             token, created = Token.objects.get_or_create(user=new_user)
-            return Response({"Token":token.key})
+            return Response({"Token":token.key}, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(APIView):
-    # def get(self, request):
-    #     form = LoginForm()
-
     def post(self, request):
-        form = LoginForm()
-        # id = request.POST.get('id')
-        # password = request.POST.get('password')
-        return HttpResponse(form.data['id'])
-        user = authenticate(request, username=form.data['id'], password=form.data['password'])
-        if user is None:
-            return Http404("Wrong input")
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = authenticate(request, username=serializer.data['id'], password=serializer.data['password'])
+            if user is None:
+                return Response({"error":"User does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+            auth_login(request, user)
+            token = Token.objects.get(user=user)
+            return Response({"Token":token.key}, status=status.HTTP_200_OK)
         
-        auth_login(request, user)
-
-        token = Token.objects.get(user=user)
-        return Response({"Token":token.key})
-        # return render(request, 'users/login.html', {'form':form})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
 
 class LogoutView(APIView):
     def get(self, request):
         auth_logout(request)
-        token = Token.get(request)
+        token = Token.objects.get() # 여기 고치기
         return Response({"Token":token.key})
-        return redirect('/users')
