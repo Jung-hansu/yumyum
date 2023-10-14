@@ -33,12 +33,12 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
     
+
 class User(AbstractBaseUser):
     user_id = models.AutoField(primary_key=True)
     name = models.CharField()
     phone_number = models.CharField(max_length=11)
     id = models.CharField(db_column='ID', max_length=30, blank=True, null=True, unique=True)  # Field name made lowercase.
-    # password = models.CharField(db_column='password', blank=True, null=True)  # Field name made lowercase.
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -51,13 +51,7 @@ class User(AbstractBaseUser):
         db_table = 'User'
 
 
-
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    
-
-
-## 아래는 쓰이지 않는(다고 추정되는) 모델들
+########## 쓰이지 않는(다고 추정되는) 모델들 ##########
 class AuthGroup(models.Model):
     name = models.CharField(unique=True, max_length=150)
 
