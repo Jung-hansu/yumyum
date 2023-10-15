@@ -1,4 +1,5 @@
 from django.contrib.gis.db import models
+from django.contrib.postgres.fields import ArrayField
 
 class Manager(models.Model):
     manager_id = models.AutoField(primary_key=True)
@@ -29,12 +30,13 @@ class OperatingHours(models.Model):
 class Restaurant(models.Model):
     restaurant_id = models.OneToOneField(OperatingHours, models.DO_NOTHING, primary_key=True)
     name = models.CharField(max_length=30)
-    category = models.CharField(max_length=30)
-    longitude = models.DecimalField(max_digits=65535, decimal_places=65535)
-    latitude = models.DecimalField(max_digits=65535, decimal_places=65535)
+    category = ArrayField(models.IntegerField())
+    # latitude = models.DecimalField(max_digits=65535, decimal_places=65535)
+    # longitude = models.DecimalField(max_digits=65535, decimal_places=65535)
     waiting = models.IntegerField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    location = models.PointField() # latitude, longitude 통합
 
     class Meta:
         managed = False

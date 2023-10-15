@@ -55,7 +55,8 @@ class LogoutView(APIView):
 
 
 class UnregisterView(APIView):
-    def delete(self, request, user_id):
+    def delete(self, request, **kwargs):
+        user_id = kwargs.get('user_id')
         user = request.user
         if user.is_authenticated:
             try:
