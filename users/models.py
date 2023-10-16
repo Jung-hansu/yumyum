@@ -42,6 +42,8 @@ class User(AbstractBaseUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    is_superuser = models.BooleanField()
+
     USERNAME_FIELD = 'id'
     REQUIRED_FIELDS = ['phone_number']
     objects = UserManager()
