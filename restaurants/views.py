@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.contrib.gis.geos import Point, GEOSGeometry
+from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import D
 from django.db.models import Q
 
@@ -28,12 +28,13 @@ class RestaurantFilterView(APIView):
     def get(self, request):
         serializer = RestaurantFilterSerializer(data=request.data)
         if serializer.is_valid():
-            latitude = serializer.validated_data.get('latitude')
             longitude = serializer.validated_data.get('longitude')
+            latitude = serializer.validated_data.get('latitude')
             category = serializer.validated_data.get('category')
 
-            # location query 작성            
-            user_location = Point(latitude, longitude, srid=4326) # srid는 사용하는 좌표 시스템에 따라 달라질 수 있음
+            # location query 작성 -> models.py의 Restaurant.save() 확인하기 
+            user_location = Point((longitude, latitude)) # srid는 사용하는 좌표 시스템에 따라 달라질 수 있음
+            print(user_location)
             query_pos = Q(location__distance_lte=(user_location, D(km=1))) # 유저 좌표 기준 반경 1km 검색
 
             # category query 작성
@@ -59,15 +60,9 @@ class RestaurantFilterView(APIView):
 class CreateRestaurantView(APIView):
     def post(self, request):
         if request.user.is_superuser:
-            latitude = request.data.get('latitude')
-            longitude = request.data.get('longitude')
-
-            # 입력받은 위치정보를 Point형으로 변환하여 전달
-            location = Point(latitude, longitude, srid=4326)
-            request.data['location'] = location
             serializer = RestaurantSerializer(data=request.data)
             if serializer.is_valid():
-                serializer.save() # Restaurant 정보 DB에 저장
+                serializer.save()
                 return Response({"message":"Create restaurant successful"}, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response({"error":"Unauthorized access"}, status=status.HTTP_401_UNAUTHORIZED)
