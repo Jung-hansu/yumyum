@@ -1,12 +1,12 @@
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import Point, GEOSGeometry
 from django.contrib.gis.measure import D
 from django.db.models import Q
 
-from .models import Manager, Restaurant, OperatingHours
-from .serializers import RestaurantFilterSerializer
+from .models import *
+from .serializers import *
 
 # Create your views here.
 class RestaurantView(APIView):
@@ -26,7 +26,7 @@ class RestaurantView(APIView):
 
 class RestaurantFilterView(APIView):
     def get(self, request):
-        serializer = RestaurantFilterSerializer()
+        serializer = RestaurantFilterSerializer(data=request.data)
         if serializer.is_valid():
             latitude = serializer.validated_data.get('latitude')
             longitude = serializer.validated_data.get('longitude')
@@ -55,3 +55,19 @@ class RestaurantFilterView(APIView):
                             status=status.HTTP_200_OK)
         return Response({"error":"Invalid request. Please check your input data"}, status=status.HTTP_400_BAD_REQUEST)
     
+# Superuser용 식당 추가 메소드
+class CreateRestaurantView(APIView):
+    def post(self, request):
+        if request.user.is_superuser:
+            latitude = request.data.get('latitude')
+            longitude = request.data.get('longitude')
+
+            # 입력받은 위치정보를 Point형으로 변환하여 전달
+            location = Point(latitude, longitude, srid=4326)
+            request.data['location'] = location
+            serializer = RestaurantSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save() # Restaurant 정보 DB에 저장
+                return Response({"message":"Create restaurant successful"}, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error":"Unauthorized access"}, status=status.HTTP_401_UNAUTHORIZED)
