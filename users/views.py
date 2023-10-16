@@ -12,12 +12,22 @@ class SignupView(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
+            # 근데 여기에 걸릴 일이 없음. 추후 수정할 것
             if None in serializer.validated_data:
                 return Response({"error":"All fields are required"}, status=status.HTTP_400_BAD_REQUEST)
             
             phone_number = serializer.validated_data['phone_number']
             if User.objects.filter(phone_number=phone_number).exists():
                 return Response({"error":"Phone number already exists"}, status=status.HTTP_400_BAD_REQUEST)
+
+            min_id_len = 4
+            min_password_len = 4
+            id_len = len(serializer.validated_data['id'])
+            password_len = len(serializer.validated_data['password'])
+            if id_len < min_id_len:
+                return Response({"error":f"ID must contain at least {min_id_len} characters"}, status=status.HTTP_400_BAD_REQUEST)
+            if password_len < min_password_len:
+                return Response({"error":f"Password must contain at least {min_password_len} characters"}, status=status.HTTP_400_BAD_REQUEST)
 
             user = serializer.save()
             user.set_password(serializer.validated_data['password'])

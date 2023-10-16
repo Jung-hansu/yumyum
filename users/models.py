@@ -38,14 +38,14 @@ class User(AbstractBaseUser):
     user_id = models.AutoField(primary_key=True)
     name = models.CharField()
     phone_number = models.CharField(max_length=11)
-    id = models.CharField(db_column='ID', max_length=30, blank=True, null=True, unique=True)  # Field name made lowercase.
+    id = models.CharField(db_column='ID', max_length=30, blank=True, unique=True)  # Field name made lowercase.
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    is_superuser = models.BooleanField()
+    is_superuser = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'id'
-    REQUIRED_FIELDS = ['phone_number']
+    REQUIRED_FIELDS = ['name','phone_number']
     objects = UserManager()
 
     class Meta:
