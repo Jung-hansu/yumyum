@@ -30,7 +30,6 @@ class UserManager(BaseUserManager):
     def create_superuser(self, name, phone_number, id, password):
         user = self.create_user(name, phone_number, id, password)
         user.is_admin = True
-        user.is_superuser = True
         user.save(using=self._db)
         return user
     
@@ -42,8 +41,8 @@ class User(AbstractBaseUser):
     id = models.CharField(db_column='ID', max_length=30, blank=True, unique=True)  # Field name made lowercase.
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    is_superuser = models.BooleanField(default=False)
+    is_admin = models.BooleanField(default=False)
+    # is_superuser = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'id'
     REQUIRED_FIELDS = ['name','phone_number']

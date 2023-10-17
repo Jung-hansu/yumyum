@@ -71,7 +71,7 @@ class UnregisterView(APIView):
         if user.is_authenticated:
             try:
                 token = Token.objects.get(user_id=user_id)
-                if user is not token.user:
+                if user != token.user:
                     return Response({"error":"User has no authorization"}, status=status.HTTP_401_UNAUTHORIZED)
                 user.delete()
                 token.delete()
