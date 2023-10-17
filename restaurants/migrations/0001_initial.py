@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
                 ('category', django.contrib.postgres.fields.ArrayField(base_field=models.IntegerField(), size=None)),
                 ('longitude', models.DecimalField(decimal_places=7, max_digits=10)),
                 ('latitude', models.DecimalField(decimal_places=7, max_digits=10)),
-                ('location', django.contrib.gis.db.models.fields.PointField(null=True, srid=4326)),
+                ('location', django.contrib.gis.db.models.fields.PointField(null=True)),
                 ('waiting', models.IntegerField(blank=True, null=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),

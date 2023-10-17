@@ -59,7 +59,7 @@ class RestaurantFilterView(APIView):
 # Superuser용 식당 추가 메소드
 class CreateRestaurantView(APIView):
     def post(self, request):
-        if request.user.is_superuser:
+        if request.user.is_admin:
             serializer = RestaurantSerializer(data=request.data)
             if serializer.is_valid():
                 serializer.save()
