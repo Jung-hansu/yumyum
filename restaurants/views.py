@@ -5,20 +5,21 @@ from django.contrib.gis.geos import Point, GEOSGeometry
 from django.contrib.gis.measure import D
 from django.db.models import Q
 
-from .models import *
 from .serializers import *
+from .models import Restaurant
 
 
 # Create your views here.
-
-
 # Superuser용 식당 추가 메소드
 class CreateRestaurantView(APIView):
     def post(self, request):
         if request.user.is_admin:
             longitude = request.data.get("longitude")
             latitude = request.data.get("latitude")
-            if None in (longitude, latitude):
+            try:
+                float(longitude)
+                float(latitude)
+            except ValueError:
                 return Response({"error":"Invalid input error"}, status=status.HTTP_400_BAD_REQUEST)
             
             location = GEOSGeometry(f'POINT({longitude} {latitude})', srid=4326)
@@ -35,7 +36,7 @@ class CreateRestaurantView(APIView):
             {"error": "Unauthorized access"}, status=status.HTTP_401_UNAUTHORIZED
         )
 
-class RestaurantView(APIView):
+class RestaurantInfoView(APIView):
     def get(self, request, **kwargs):
         restaurant_id = kwargs.get("restaurant_id")
         if restaurant_id is not None:
