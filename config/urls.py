@@ -22,5 +22,4 @@ urlpatterns = [
     path('users/', include('users.urls')),
     # path('reviews/', include('reviews.urls')),
     path('restaurants/', include('restaurants.urls')),
-    path('waitings/', include('waitings.urls')),
 ]

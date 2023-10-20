@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     "reviews.apps.ReviewsConfig",
     "users.apps.UsersConfig",
     "restaurants.apps.RestaurantsConfig",
-    "waitings.apps.WaitingsConfig",
     "rest_framework",
     "rest_framework.authtoken",
 ]
