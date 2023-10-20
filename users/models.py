@@ -8,8 +8,6 @@
 from django.contrib.gis.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
-from restaurants.models import Restaurant
-
 
 # User 클래스에서 사용할 유저데이터 매니지먼트 클래스
 class UserManager(BaseUserManager):
@@ -52,19 +50,6 @@ class User(AbstractBaseUser):
     class Meta:
         managed = False
         db_table = "User"
-
-
-class WaitingUser(models.Model):
-    waiting_user_id = models.IntegerField(primary_key=True)
-    user_id = models.ForeignKey(User, models.CASCADE)
-    restaurant_id = models.ForeignKey(Restaurant, models.CASCADE)
-    position = models.IntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        managed = False
-        db_table = "Waiting_User"
 
 
 ########## Django default models ##########

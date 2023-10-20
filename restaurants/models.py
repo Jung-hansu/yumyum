@@ -1,5 +1,6 @@
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.gis.db import models
+from users.models import User
 
 
 class Restaurant(models.Model):
@@ -43,3 +44,16 @@ class OperatingHours(models.Model):
     class Meta:
         managed = False
         db_table = "Operating_hours"
+
+
+class WaitingUser(models.Model):
+    waiting_user_id = models.IntegerField(primary_key=True)
+    user_id = models.ForeignKey(User, models.CASCADE)
+    restaurant_id = models.ForeignKey(Restaurant, models.CASCADE)
+    position = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = False
+        db_table = "Waiting_User"
