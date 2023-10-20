@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import Point, GEOSGeometry
 from django.contrib.gis.measure import D
 from django.db.models import Q
 
@@ -42,7 +42,7 @@ class RestaurantFilterView(APIView):
             category = serializer.validated_data.get("category")
 
             # location query 작성 -> models.py의 Restaurant.save() 확인하기
-            user_location = Point(longitude, latitude)  # srid는 사용하는 좌표 시스템에 따라 달라질 수 있음
+            user_location = Point((longitude, latitude), srid=4326)  # srid는 사용하는 좌표 시스템에 따라 달라질 수 있음
             print(user_location)
             query_pos = Q(
                 location__distance_lte=(user_location, D(km=1))
@@ -51,7 +51,7 @@ class RestaurantFilterView(APIView):
             # category query 작성
             query_cat = Q()
             for category_id in category:
-                query_cat |= Q(category__contains=[category_id])
+                query_cat &= Q(category__contains=[category_id])
 
             restaurant_infos = []
             restaurants = Restaurant.objects.filter(query_pos, query_cat)
@@ -84,7 +84,7 @@ class CreateRestaurantView(APIView):
         if request.user.is_admin:
             longitude = request.data["longitude"]
             latitude = request.data["latitude"]
-            location = Point(float(longitude), float(latitude))
+            location = GEOSGeometry(f'POINT({longitude} {latitude})', srid=4326)
             request.data["location"] = location
             serializer = RestaurantSerializer(data=request.data)
             if serializer.is_valid():
