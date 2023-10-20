@@ -8,18 +8,18 @@
 from django.contrib.gis.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
+from restaurants.models import Restaurant
+
 
 # User 클래스에서 사용할 유저데이터 매니지먼트 클래스
 class UserManager(BaseUserManager):
     def create_user(self, name, phone_number, id, password=None):
-        if not (name):
-            raise ValueError("The Name field must be set")
-        if not (phone_number):
-            raise ValueError("The Phone Number field must be set")
-        if not (id):
-            raise ValueError("The ID field must be set")
+        if not (name, phone_number, id):
+            raise ValueError("Fields must be set")
         for user in User.objects.all():
-            if phone_number == user.phone_number or (id == user.id and password == user.password):
+            if phone_number == user.phone_number or (
+                id == user.id and password == user.password
+            ):
                 return None
 
         user = self.model(name=name, phone_number=phone_number, id=id)
@@ -32,56 +32,70 @@ class UserManager(BaseUserManager):
         user.is_admin = True
         user.save(using=self._db)
         return user
-    
+
 
 class User(AbstractBaseUser):
     user_id = models.AutoField(primary_key=True)
     name = models.CharField()
     phone_number = models.CharField(max_length=11)
-    id = models.CharField(db_column='ID', max_length=30, blank=True, unique=True)  # Field name made lowercase.
+    id = models.CharField(
+        db_column="ID", max_length=30, blank=True, unique=True
+    )  # Field name made lowercase.
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_admin = models.BooleanField(default=False)
-    # is_superuser = models.BooleanField(default=False)
 
-    USERNAME_FIELD = 'id'
-    REQUIRED_FIELDS = ['name','phone_number']
+    USERNAME_FIELD = "id"
+    REQUIRED_FIELDS = ["name", "phone_number"]
     objects = UserManager()
 
     class Meta:
         managed = False
-        db_table = 'User'
+        db_table = "User"
 
 
-########## 쓰이지 않는(다고 추정되는) 모델들 ##########
+class WaitingUser(models.Model):
+    waiting_user_id = models.IntegerField(primary_key=True)
+    user_id = models.ForeignKey(User, models.CASCADE)
+    restaurant_id = models.ForeignKey(Restaurant, models.CASCADE)
+    position = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = False
+        db_table = "Waiting_User"
+
+
+########## Django default models ##########
 class AuthGroup(models.Model):
     name = models.CharField(unique=True, max_length=150)
 
     class Meta:
         managed = False
-        db_table = 'auth_group'
+        db_table = "auth_group"
 
 
 class AuthGroupPermissions(models.Model):
     id = models.BigAutoField(primary_key=True)
     group = models.ForeignKey(AuthGroup, models.DO_NOTHING)
-    permission = models.ForeignKey('AuthPermission', models.DO_NOTHING)
+    permission = models.ForeignKey("AuthPermission", models.DO_NOTHING)
 
     class Meta:
         managed = False
-        db_table = 'auth_group_permissions'
-        unique_together = (('group', 'permission'),)
+        db_table = "auth_group_permissions"
+        unique_together = (("group", "permission"),)
 
 
 class AuthPermission(models.Model):
     name = models.CharField(max_length=255)
-    content_type = models.ForeignKey('DjangoContentType', models.DO_NOTHING)
+    content_type = models.ForeignKey("DjangoContentType", models.DO_NOTHING)
     codename = models.CharField(max_length=100)
 
     class Meta:
         managed = False
-        db_table = 'auth_permission'
-        unique_together = (('content_type', 'codename'),)
+        db_table = "auth_permission"
+        unique_together = (("content_type", "codename"),)
 
 
 class AuthUser(models.Model):
@@ -98,7 +112,7 @@ class AuthUser(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'auth_user'
+        db_table = "auth_user"
 
 
 class AuthUserGroups(models.Model):
@@ -108,8 +122,8 @@ class AuthUserGroups(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'auth_user_groups'
-        unique_together = (('user', 'group'),)
+        db_table = "auth_user_groups"
+        unique_together = (("user", "group"),)
 
 
 class AuthUserUserPermissions(models.Model):
@@ -119,8 +133,8 @@ class AuthUserUserPermissions(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'auth_user_user_permissions'
-        unique_together = (('user', 'permission'),)
+        db_table = "auth_user_user_permissions"
+        unique_together = (("user", "permission"),)
 
 
 class DjangoAdminLog(models.Model):
@@ -129,12 +143,14 @@ class DjangoAdminLog(models.Model):
     object_repr = models.CharField(max_length=200)
     action_flag = models.SmallIntegerField()
     change_message = models.TextField()
-    content_type = models.ForeignKey('DjangoContentType', models.DO_NOTHING, blank=True, null=True)
+    content_type = models.ForeignKey(
+        "DjangoContentType", models.DO_NOTHING, blank=True, null=True
+    )
     user = models.ForeignKey(AuthUser, models.DO_NOTHING)
 
     class Meta:
         managed = False
-        db_table = 'django_admin_log'
+        db_table = "django_admin_log"
 
 
 class DjangoContentType(models.Model):
@@ -143,8 +159,8 @@ class DjangoContentType(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'django_content_type'
-        unique_together = (('app_label', 'model'),)
+        db_table = "django_content_type"
+        unique_together = (("app_label", "model"),)
 
 
 class DjangoMigrations(models.Model):
@@ -155,7 +171,7 @@ class DjangoMigrations(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'django_migrations'
+        db_table = "django_migrations"
 
 
 class DjangoSession(models.Model):
@@ -165,4 +181,4 @@ class DjangoSession(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'django_session'
+        db_table = "django_session"
