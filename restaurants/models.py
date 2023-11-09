@@ -48,8 +48,8 @@ class OperatingHours(models.Model):
 
 class WaitingUser(models.Model):
     waiting_user_id = models.AutoField(primary_key=True)
-    user_id = models.ForeignKey(User, models.CASCADE, null=True)
-    restaurant_id = models.ForeignKey(Restaurant, models.CASCADE)
+    user = models.ForeignKey(User, models.CASCADE, null=True)
+    restaurant = models.ForeignKey(Restaurant, models.CASCADE)
     name = models.CharField(null=True)
     phone_number = models.CharField(max_length=11, null=True)
     position = models.IntegerField()
