@@ -22,7 +22,7 @@ class Restaurant(models.Model):
 
 class Manager(models.Model):
     manager_id = models.AutoField(primary_key=True)
-    restaurant_id = models.OneToOneField(Restaurant, on_delete=models.CASCADE)
+    restaurant = models.OneToOneField(Restaurant, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -33,7 +33,7 @@ class Manager(models.Model):
 
 class OperatingHours(models.Model):
     operating_id = models.AutoField(primary_key=True)
-    restaurant_id = models.OneToOneField(Restaurant, on_delete=models.CASCADE)
+    restaurant = models.OneToOneField(Restaurant, on_delete=models.CASCADE)
     day_of_week = models.IntegerField(blank=True, null=True)
     start_time = models.DateTimeField(blank=True, null=True)
     end_time = models.DateTimeField(blank=True, null=True)
