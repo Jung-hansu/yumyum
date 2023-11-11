@@ -104,7 +104,7 @@ class UserWaitingView(APIView):
         if user.is_authenticated:
             for restaurant in user.reservations.all():
                 queue = restaurant.queue
-                position = queue.filter(reservation_date__lt=F('reservation_date')).count() + 1
+                position = queue.filter(reservation_id__lte=F('reservation_id')).count()
                 reservation_list.append({
                     "restaurant": restaurant.name,
                     "position": position, # 얘가 제대로 실행이 안됨

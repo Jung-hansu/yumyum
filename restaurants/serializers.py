@@ -6,8 +6,3 @@ class RestaurantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Restaurant
         fields = ["name", "category", "longitude", "latitude"]
-
-class RestaurantFilterSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Restaurant
-        fields = ["longitude", "latitude", "category"]

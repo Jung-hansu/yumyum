@@ -64,18 +64,3 @@ class OperatingHours(models.Model):
     class Meta:
         managed = False
         db_table = "Operating_hours"
-
-
-# class WaitingUser(models.Model):
-#     waiting_user_id = models.AutoField(primary_key=True)
-#     user = models.ForeignKey('User', models.CASCADE, null=True)
-#     restaurant = models.ForeignKey(Restaurant, models.CASCADE)
-#     name = models.CharField(null=True)
-#     phone_number = models.CharField(max_length=11, null=True)
-#     position = models.IntegerField()
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-
-#     class Meta:
-#         managed = False
-#         db_table = "Waiting_User"
