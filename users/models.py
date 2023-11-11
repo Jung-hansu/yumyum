@@ -7,7 +7,6 @@
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.contrib.gis.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
-# from restaurants.models import Restaurant, Reservation
 
 
 # User 클래스에서 사용할 유저데이터 매니지먼트 클래스
