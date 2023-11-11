@@ -6,7 +6,7 @@ from django.contrib.gis.measure import D
 from django.db.models import Q
 from django.db import transaction
 
-from .serializers import RestaurantSerializer
+from .serializers import RestaurantSerializer, RestaurantFilterSerializer
 from .models import Restaurant, Reservation
 
 
@@ -94,7 +94,7 @@ class RestaurantWaitingView(APIView):
         
         waiting_list = []
         for tmp in restaurant.queue.all():
-            user_name = tmp.user.name if tmp.user else 'Anonymous user'
+            user_name = 'Anonymous user' if not tmp.user else tmp.user.name
             waiting_list.append({
                 "reservation_id":tmp.reservation_id,
                 "restaurant":tmp.restaurant.name,
@@ -150,11 +150,8 @@ class RestaurantWaitingView(APIView):
             next.user.reservations.remove(restaurant)
         else:
             next_name = 'Anonymous user'
-            Reservation.objects.filter(phone_number=next.phone_number).delete()
         return Response({
             "message": "Queuing successful",
             "name":next_name,
             "phone_number":next.phone_number,
         }, status=status.HTTP_200_OK)
-
-    # 예약 취소(유저) 만들기
