@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.db import transaction
 
 from .serializers import RestaurantSerializer, RestaurantFilterSerializer
-from .models import Restaurant, WaitingUser
+from .models import Restaurant, Reservation
 
 
 # Create your views here.
@@ -34,22 +34,18 @@ class CreateRestaurantView(APIView):
 
 
 class RestaurantInfoView(APIView):
-    def get(self, request, **kwargs):
-        restaurant_id = kwargs.get("restaurant_id")
-        if restaurant_id is not None:
-            try:
-                restaurant = Restaurant.objects.get(restaurant_id=restaurant_id)
-                return Response(
-                    {
-                        "name": restaurant.name,
-                        "category": restaurant.category,
-                        "latitude": restaurant.location[0],
-                        "longitude": restaurant.location[1],
-                        "waiting": restaurant.waiting,
-                    },
-                    status=status.HTTP_200_OK,)
-            except Restaurant.DoesNotExist:
-                pass
+    def get(self, request, restaurant_id):
+        restaurant = Restaurant.objects.filter(restaurant_id=restaurant_id).first()
+        if restaurant:
+            return Response(
+                {
+                    "name": restaurant.name,
+                    "category": restaurant.category,
+                    "latitude": restaurant.location[0],
+                    "longitude": restaurant.location[1],
+                    "waiting": len(restaurant.queue.all()),
+                },
+                status=status.HTTP_200_OK,)
         return Response({"error": "Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
 
 ############## 시간 기준 필터링 기능 추가 필요 ###############
@@ -78,7 +74,7 @@ class RestaurantFilterView(APIView):
                 "category_ids": restaurant.category,
                 "longitude": restaurant.location[0],
                 "latitude": restaurant.location[1],
-                "waiting": restaurant.waiting,
+                "waiting": len(restaurant.queue.all()),
             }
             restaurant_infos.append(restaurant_info)
         return Response(
@@ -90,65 +86,72 @@ class RestaurantFilterView(APIView):
     
 
 class RestaurantWaitingView(APIView):
-    # 현재 식당의 대기 팀 수 파악
+    # 식당 웨이팅 조회(유저)
     def get(self, request, restaurant_id):
         restaurant = Restaurant.objects.filter(restaurant_id=restaurant_id).first()
-        if restaurant is None:
+        if not restaurant:
             return Response({"error": "Restaurant not found"}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({"waiting": restaurant.waiting}, status=status.HTTP_200_OK)
+        
+        waiting_list = []
+        for tmp in restaurant.queue.all():
+            user_name = 'Anonymous user' if not tmp.user else tmp.user.name
+            waiting_list.append({
+                "reservation_id":tmp.reservation_id,
+                "restaurant":tmp.restaurant.name,
+                "user":user_name,
+                "phone_number":tmp.phone_number})
+        return Response({"waitings": waiting_list}, status=status.HTTP_200_OK)
 
-    # 비회원인 경우 정보 입력받음
+    # 예약 등록(유저)
     @transaction.atomic
     def post(self, request, restaurant_id):
         user = request.user
         restaurant = Restaurant.objects.filter(restaurant_id=restaurant_id).first()
-        if restaurant is None:
+        if not restaurant:
             return Response({"error": "Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        restaurant.waiting += 1
-        position = restaurant.waiting
+        # 회원 처리
         if user.is_authenticated:
-            if WaitingUser.objects.filter(user=user):
+            if restaurant.queue.filter(user=user).exists():
                 return Response({"error":"Waiting already exists"}, status=status.HTTP_409_CONFLICT)
-            WaitingUser.objects.get_or_create(
-                restaurant=restaurant,
-                user=user,
-                name=user.name,
-                phone_number=user.phone_number,
-                position=position,
-            )
+            new_reservation = Reservation.objects.create(restaurant=restaurant, user=user, phone_number=user.phone_number)
+            restaurant.queue.add(new_reservation)
+        # 비회원 처리
         else:
-            name = request.data.get("name")
-            phone_number = request.data.get("phone_number")
-            if not (name and phone_number):
+            phone_number = request.data.get('phone_number')
+            if not phone_number:
                 return Response({"error": "Invalid input data"}, status=status.HTTP_400_BAD_REQUEST)
-            if WaitingUser.objects.filter(name=name, phone_number=phone_number):
+            if restaurant.queue.filter(phone_number=phone_number).exists():
                 return Response({"error":"Waiting already exists"}, status=status.HTTP_409_CONFLICT)
-            WaitingUser.objects.get_or_create(
-                restaurant=restaurant,
-                name=name,
-                phone_number=phone_number,
-                position=position,
-            )
+            new_reservation = Reservation.objects.create(restaurant=restaurant, phone_number=phone_number)
+            restaurant.queue.add(new_reservation)
+
         restaurant.save()
+        position = len(restaurant.queue.all())
         return Response({"message": "Joined the queue successfully.", "position": position}, status=status.HTTP_200_OK)
 
-    # 웨이팅한 고객이 입장한 경우
+    # 예약 입장(매니저)
     @transaction.atomic
-    def put(self, request, restaurant_id):
+    def patch(self, request, restaurant_id):
         restaurant = Restaurant.objects.filter(restaurant_id=restaurant_id).first()
-        if restaurant is None:
+        if not restaurant:
             return Response({"error": "Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
-        if not WaitingUser.objects.exists():
+        
+        queue = restaurant.queue
+        if not queue.exists():
             return Response({"error": "Waiting does not exist"}, status=status.HTTP_400_BAD_REQUEST)
        
-       # 식당 waiting 감소
-        restaurant.waiting -= 1
+        next = queue.first()
+        queue.remove(next)
         restaurant.save()
 
-        # 전체 웨이팅유저 포지션 감소
-        WaitingUser.objects.filter(position=1).delete()
-        for waitingUsers in WaitingUser.objects.all():
-            waitingUsers.position -= 1
-            waitingUsers.save()
-        return Response({"message": "Queuing successful"}, status=status.HTTP_200_OK)
+        if next.user:
+            next_name = next.user.name
+            next.user.reservations.remove(restaurant)
+        else:
+            next_name = 'Anonymous user'
+        return Response({
+            "message": "Queuing successful",
+            "name":next_name,
+            "phone_number":next.phone_number,
+        }, status=status.HTTP_200_OK)

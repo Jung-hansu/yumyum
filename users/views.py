@@ -4,10 +4,10 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from django.db import transaction
+from django.db.models import F
 
 from .models import User
 from .serializers import UserSerializer
-from restaurants.models import WaitingUser
 
 # Create your views here.
 class SignupView(APIView):
@@ -64,9 +64,9 @@ class LogoutView(APIView):
             try:
                 token = Token.objects.get(user=user)
                 token.delete()
-                return Response({"message": "Logout Success"}, status=status.HTTP_200_OK)
+                return Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
             except Token.DoesNotExist: pass
-        return Response({"error":"Session Expired or Not Found"}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({"error":"Session expired or not found"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class UserInfoView(APIView):
@@ -84,34 +84,30 @@ class UserInfoView(APIView):
     def delete(self, request, user_id):
         user = request.user
         if user.is_authenticated:
-            try:
-                token = Token.objects.get(user_id=user_id)
-                if user != token.user:
-                    return Response({"error":"User has no authorization"}, status=status.HTTP_401_UNAUTHORIZED)
-                user.delete()
-                token.delete()
-                return Response({"message":"User successfully deleted"}, status=status.HTTP_204_NO_CONTENT)
-            except Token.DoesNotExist:
+            token = Token.objects.filter(user_id=user_id).first()
+            if not token :
                 Response({"error":"User not found"}, status=status.HTTP_404_NOT_FOUND)
-        return Response({"error":"Session Expired or Not Found"}, status=status.HTTP_400_BAD_REQUEST)
+            if user != token.user:
+                return Response({"error":"User has no authorization"}, status=status.HTTP_401_UNAUTHORIZED)
+            user.delete()
+            token.delete()
+            return Response({"message":"User successfully deleted"}, status=status.HTTP_204_NO_CONTENT)
+        return Response({"error":"Session expired or not found"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserWaitingView(APIView):
+    # 예약한 식당
     def get(self, request):
         user = request.user
-        waiting_list = []
+        reservation_list = []
+        # 회원 처리(비회원 처리는 프론트에서)
         if user.is_authenticated:
-            waitings = WaitingUser.objects.filter(user_id=user.user_id)
-        else:
-            name = request.GET.get('name')
-            phone_number = request.GET.get('phone_number')
-            if not (name and phone_number):
-                return Response({"error":"Invalid input data"}, status=status.HTTP_400_BAD_REQUEST)
-            waitings = WaitingUser.objects.filter(name=name, phone_number=phone_number)
-        for waiting in waitings:
-            waiting_list.append(
-                {
-                    "restaurant_id":waiting.restaurant_id,
-                    "position":waiting.position,
+            for restaurant in user.reservations.all():
+                queue = restaurant.queue
+                position = queue.filter(reservation_date__lt=F('reservation_date')).count() + 1
+                reservation_list.append({
+                    "restaurant": restaurant.name,
+                    "position": position, # 얘가 제대로 실행이 안됨
                 })
-        return Response({"waitings":waiting_list}, status=status.HTTP_200_OK)
+            return Response({"waitings":reservation_list}, status=status.HTTP_200_OK)
+        return Response({"error":"Session expired or not found"}, status=status.HTTP_400_BAD_REQUEST)

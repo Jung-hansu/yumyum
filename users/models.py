@@ -7,6 +7,7 @@
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.contrib.gis.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+# from restaurants.models import Restaurant, Reservation
 
 
 # User 클래스에서 사용할 유저데이터 매니지먼트 클래스
@@ -15,9 +16,7 @@ class UserManager(BaseUserManager):
         if not (name, phone_number, id):
             raise ValueError("Fields must be set")
         for user in User.objects.all():
-            if phone_number == user.phone_number or (
-                id == user.id and password == user.password
-            ):
+            if phone_number == user.phone_number or (id == user.id and password == user.password):
                 return None
 
         user = self.model(name=name, phone_number=phone_number, id=id)
@@ -36,9 +35,8 @@ class User(AbstractBaseUser):
     user_id = models.AutoField(primary_key=True)
     name = models.CharField()
     phone_number = models.CharField(max_length=11)
-    id = models.CharField(
-        db_column="ID", max_length=30, blank=True, unique=True
-    )  # Field name made lowercase.
+    id = models.CharField(db_column="ID", max_length=30, blank=True, unique=True)  # Field name made lowercase.
+    reservations = models.ManyToManyField('restaurants.Restaurant', through='restaurants.Reservation', related_name='reservations_list', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_admin = models.BooleanField(default=False)

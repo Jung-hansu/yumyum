@@ -10,14 +10,34 @@ class Restaurant(models.Model):
     longitude = models.DecimalField(max_digits=10, decimal_places=7)
     latitude = models.DecimalField(max_digits=10, decimal_places=7)
     location = models.GeometryField(srid=4326)
-    waiting = models.IntegerField(default=0)
-
+    queue = models.ManyToManyField('Reservation', through='ReservationQueue' , related_name='this_restaurant', blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         managed = False
         db_table = "Restaurant"
+
+# Restaurant - User 관계의 중간테이블
+class Reservation(models.Model):
+    reservation_id = models.AutoField(primary_key=True)
+    restaurant = models.ForeignKey('Restaurant', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    phone_number = models.CharField(max_length=11, null=True, blank=True)
+    reservation_date = models.DateField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['reservation_id']
+
+# Restaurant - Reservation 관계의 중간테이블
+class ReservationQueue(models.Model):
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+    reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+
+    class Meta:
+        unique_together = ('reservation', 'restaurant')
 
 
 class Manager(models.Model):
@@ -46,16 +66,16 @@ class OperatingHours(models.Model):
         db_table = "Operating_hours"
 
 
-class WaitingUser(models.Model):
-    waiting_user_id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User, models.CASCADE, null=True)
-    restaurant = models.ForeignKey(Restaurant, models.CASCADE)
-    name = models.CharField(null=True)
-    phone_number = models.CharField(max_length=11, null=True)
-    position = models.IntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+# class WaitingUser(models.Model):
+#     waiting_user_id = models.AutoField(primary_key=True)
+#     user = models.ForeignKey('User', models.CASCADE, null=True)
+#     restaurant = models.ForeignKey(Restaurant, models.CASCADE)
+#     name = models.CharField(null=True)
+#     phone_number = models.CharField(max_length=11, null=True)
+#     position = models.IntegerField()
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        managed = False
-        db_table = "Waiting_User"
+#     class Meta:
+#         managed = False
+#         db_table = "Waiting_User"
