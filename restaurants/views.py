@@ -93,14 +93,17 @@ class RestaurantWaitingView(APIView):
             return Response({"error": "Restaurant not found"}, status=status.HTTP_400_BAD_REQUEST)
         
         waiting_list = []
-        for tmp in restaurant.queue.all():
-            user_name = 'Anonymous user' if not tmp.user else tmp.user.name
+        for waiting in restaurant.queue.all():
+            user = waiting.user
             waiting_list.append({
-                "reservation_id":tmp.reservation_id,
-                "restaurant":tmp.restaurant.name,
-                "user":user_name,
-                "phone_number":tmp.phone_number})
-        return Response({"waitings": waiting_list}, status=status.HTTP_200_OK)
+                "reservation_id":waiting.reservation_id,
+                "restaurant":waiting.restaurant.name,
+                "user":user.name if user else 'Anonymous user',
+                "phone_number":waiting.phone_number})
+        return Response({
+            "message":"Restaurant waiting retrieved successfully",
+            "waitings": waiting_list,
+            }, status=status.HTTP_200_OK)
 
     # 예약 등록(유저)
     @transaction.atomic

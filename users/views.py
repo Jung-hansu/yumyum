@@ -76,7 +76,11 @@ class UserInfoView(APIView):
         if request.user.is_authenticated and request.user == user:
             name = user.name
             phone_number = user.phone_number
-            return Response({"name": name, "phone_number": phone_number}, status=status.HTTP_200_OK)
+            return Response({
+                	"message":"User information retrieved successfully",
+                    "name": name,
+                    "phone_number": phone_number
+                }, status=status.HTTP_200_OK)
         return Response({"error":"User has no authorization"}, status=status.HTTP_401_UNAUTHORIZED)
 
     # 유저 삭제
@@ -109,6 +113,9 @@ class UserWaitingView(APIView):
                     "restaurant": restaurant.name,
                     "position": position,
                 })
-            return Response({"waitings":reservation_list}, status=status.HTTP_200_OK)
+            return Response({
+                "message": "User position retrieved successfully",
+                "waitings":reservation_list
+            }, status=status.HTTP_200_OK)
         return Response({"error":"Session expired or not found"}, status=status.HTTP_400_BAD_REQUEST)
     
