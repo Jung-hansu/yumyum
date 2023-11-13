@@ -7,6 +7,7 @@ from django.db import transaction
 from django.db.models import F
 
 from .models import User
+from restaurants.models import Restaurant, Reservation
 from .serializers import UserSerializer
 
 # Create your views here.
@@ -119,3 +120,25 @@ class UserWaitingView(APIView):
             }, status=status.HTTP_200_OK)
         return Response({"error":"Session expired or not found"}, status=status.HTTP_400_BAD_REQUEST)
     
+    # 예약 취소
+    @transaction.atomic
+    def delete(self, request):
+        user = request.user
+        restaurant_id = request.data.get('restaurant_id')
+        restaurant = Restaurant.objects.filter(restaurant_id=restaurant_id).first()
+        # 회원
+        if user.is_authenticated:
+            reservation = Reservation.objects.filter(restaurant=restaurant, user=user).first()
+            if not reservation:
+                return Response({"error":"Reservation not found"}, status=status.HTTP_404_NOT_FOUND)
+        # 비회원
+        else:
+            phone_number = request.data.get('phone_number')
+            if not phone_number:
+                return Response({"error":"Invalid input data"}, status=status.HTTP_400_BAD_REQUEST)
+            reservation = Reservation.objects.filter(restaurant=restaurant, phone_number=phone_number).first()
+            if not reservation:
+                return Response({"error":"Reservation not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        reservation.delete()
+        return Response({"message":"Reservation cancels successful"}, status=status.HTTP_200_OK)
