@@ -37,15 +37,13 @@ class RestaurantInfoView(APIView):
     def get(self, request, restaurant_id):
         restaurant = Restaurant.objects.filter(restaurant_id=restaurant_id).first()
         if restaurant:
-            return Response(
-                {
-                    "name": restaurant.name,
-                    "category": restaurant.category,
-                    "latitude": restaurant.location[0],
-                    "longitude": restaurant.location[1],
-                    "waiting": len(restaurant.queue.all()),
-                },
-                status=status.HTTP_200_OK,)
+            return Response({
+                "name": restaurant.name,
+                "category": restaurant.category,
+                "latitude": restaurant.location[0],
+                "longitude": restaurant.location[1],
+                "waiting": len(restaurant.queue.all()),
+                }, status=status.HTTP_200_OK,)
         return Response({"error": "Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
 
 ############## 시간 기준 필터링 기능 추가 필요 ###############
@@ -77,12 +75,10 @@ class RestaurantFilterView(APIView):
                 "waiting": len(restaurant.queue.all()),
             }
             restaurant_infos.append(restaurant_info)
-        return Response(
-            {
-                "message": "Nearby restaurants retrieved successfully",
-                "restaurant": restaurant_infos,
-            },
-            status=status.HTTP_200_OK)
+        return Response({
+            "message": "Nearby restaurants retrieved successfully",
+            "restaurant": restaurant_infos,
+            },status=status.HTTP_200_OK)
     
 
 class RestaurantWaitingView(APIView):
@@ -131,7 +127,10 @@ class RestaurantWaitingView(APIView):
 
         restaurant.save()
         position = len(restaurant.queue.all())
-        return Response({"message": "Joined the queue successfully.", "position": position}, status=status.HTTP_200_OK)
+        return Response({
+            "message": "Joined the queue successfully.",
+            "position": position
+            }, status=status.HTTP_200_OK)
 
     # 예약 입장(매니저)
     @transaction.atomic
@@ -157,4 +156,4 @@ class RestaurantWaitingView(APIView):
             "message": "Queuing successful",
             "name":next_name,
             "phone_number":next.phone_number,
-        }, status=status.HTTP_200_OK)
+            }, status=status.HTTP_200_OK)
