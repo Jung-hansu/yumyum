@@ -157,3 +157,12 @@ class RestaurantWaitingView(APIView):
             "name":next_name,
             "phone_number":next.phone_number,
             }, status=status.HTTP_200_OK)
+
+class RestaurantManagerView(APIView):
+    # 매니저 추가
+    def post(self, request):
+        pass
+
+class RestaurantManagementView(APIView):
+    def post(self, request, restaurant_id):
+        pass
