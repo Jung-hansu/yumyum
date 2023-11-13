@@ -6,7 +6,7 @@ from django.contrib.gis.measure import D
 from django.db.models import Q
 from django.db import transaction
 
-from .serializers import RestaurantSerializer, RestaurantFilterSerializer
+from .serializers import RestaurantSerializer
 from .models import Restaurant, Reservation
 
 
