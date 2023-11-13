@@ -104,10 +104,11 @@ class UserWaitingView(APIView):
         if user.is_authenticated:
             for restaurant in user.reservations.all():
                 queue = restaurant.queue
-                position = queue.filter(reservation_date__lt=F('reservation_date')).count() + 1
+                position = queue.filter(reservation_id__lte=F('reservation_id')).count()
                 reservation_list.append({
                     "restaurant": restaurant.name,
-                    "position": position, # 얘가 제대로 실행이 안됨
+                    "position": position,
                 })
             return Response({"waitings":reservation_list}, status=status.HTTP_200_OK)
         return Response({"error":"Session expired or not found"}, status=status.HTTP_400_BAD_REQUEST)
+    
