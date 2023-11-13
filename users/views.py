@@ -126,6 +126,9 @@ class UserWaitingView(APIView):
         user = request.user
         restaurant_id = request.data.get('restaurant_id')
         restaurant = Restaurant.objects.filter(restaurant_id=restaurant_id).first()
+        if not restaurant:
+            return Response({"error":"Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
+        
         # 회원
         if user.is_authenticated:
             reservation = Reservation.objects.filter(restaurant=restaurant, user=user).first()
@@ -136,6 +139,7 @@ class UserWaitingView(APIView):
             phone_number = request.data.get('phone_number')
             if not phone_number:
                 return Response({"error":"Invalid input data"}, status=status.HTTP_400_BAD_REQUEST)
+            
             reservation = Reservation.objects.filter(restaurant=restaurant, phone_number=phone_number).first()
             if not reservation:
                 return Response({"error":"Reservation not found"}, status=status.HTTP_404_NOT_FOUND)
