@@ -5,7 +5,7 @@ from users.models import User
 
 class Restaurant(models.Model):
     restaurant_id = models.AutoField(primary_key=True)
-    operating_hours = models.OneToOneField('OperatingHours', related_name='_restaurant', on_delete=models.DO_NOTHING)
+    operating_hours = models.OneToOneField('OperatingHours', related_name='_restaurant', on_delete=models.DO_NOTHING, null=True, blank=True)
     name = models.CharField(max_length=30)
     category = ArrayField(models.IntegerField())
     longitude = models.DecimalField(max_digits=10, decimal_places=7)
@@ -53,7 +53,7 @@ class Manager(models.Model):
 
 
 class OperatingHours(models.Model):
-    operating_id = models.AutoField(primary_key=True)
+    operating_hours_id = models.AutoField(primary_key=True)
     restaurant = models.OneToOneField(Restaurant, related_name='_operating_hours', on_delete=models.CASCADE)
     day_of_week = models.IntegerField(blank=True, null=True)
     start_time = models.DateTimeField(blank=True, null=True)
