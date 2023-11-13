@@ -10,7 +10,7 @@ class Restaurant(models.Model):
     longitude = models.DecimalField(max_digits=10, decimal_places=7)
     latitude = models.DecimalField(max_digits=10, decimal_places=7)
     location = models.GeometryField(srid=4326)
-    queue = models.ManyToManyField('Reservation', through='ReservationQueue' , related_name='this_restaurant', blank=True)
+    queue = models.ManyToManyField('Reservation', through='ReservationQueue' , related_name='restaurant_set', blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

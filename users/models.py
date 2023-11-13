@@ -35,7 +35,7 @@ class User(AbstractBaseUser):
     name = models.CharField()
     phone_number = models.CharField(max_length=11)
     id = models.CharField(db_column="ID", max_length=30, blank=True, unique=True)  # Field name made lowercase.
-    reservations = models.ManyToManyField('restaurants.Restaurant', through='restaurants.Reservation', related_name='reservations_list', blank=True)
+    reservations = models.ManyToManyField('restaurants.Restaurant', through='restaurants.Reservation', related_name='user_set', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_admin = models.BooleanField(default=False)
