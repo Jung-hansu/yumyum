@@ -41,6 +41,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     updated_at = models.DateTimeField(auto_now=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
+    last_login = models.DateTimeField()
 
     USERNAME_FIELD = "id"
     REQUIRED_FIELDS = ["name", "phone_number"]

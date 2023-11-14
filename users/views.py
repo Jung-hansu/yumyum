@@ -5,7 +5,7 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from django.db import transaction
 from django.db.models import F
-from datetime import time
+from datetime import datetime
 
 from .models import User
 from restaurants.models import Restaurant, Reservation
@@ -55,7 +55,8 @@ class LoginView(APIView):
         if user is None:
             return Response({"error":"Invalid ID or PW"}, status=status.HTTP_401_UNAUTHORIZED)
         token, created = Token.objects.get_or_create(user=user)
-        user.last_login = time()
+        user.last_login = datetime.now()
+        user.save()
         return Response({"Token":token.key, "messages":"Login successful"}, status=status.HTTP_200_OK)
 
 
