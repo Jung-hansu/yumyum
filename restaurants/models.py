@@ -1,6 +1,5 @@
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.gis.db import models
-from users.models import User
 
 
 class Restaurant(models.Model):
@@ -26,7 +25,7 @@ class Restaurant(models.Model):
 class Reservation(models.Model):
     reservation_id = models.AutoField(primary_key=True)
     restaurant = models.ForeignKey('Restaurant', on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, null=True, blank=True)
     phone_number = models.CharField(max_length=11, null=True, blank=True)
     reservation_date = models.DateField(auto_now_add=True)
 
@@ -37,7 +36,7 @@ class Reservation(models.Model):
 class ReservationQueue(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         unique_together = ('reservation', 'restaurant')
