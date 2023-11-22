@@ -20,6 +20,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
+# Naver API key
+NAVER_API_KEY_ID = "oivtdhi7k0"
+NAVER_API_KEY = "KNSTGxil4QoS6iEyK8hWsJirjHzHN6b456QPlnUs"
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ["SECRET_KEY"]
 
@@ -39,11 +43,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.gis",
-    "reviews.apps.ReviewsConfig",
-    "users.apps.UsersConfig",
-    "restaurants.apps.RestaurantsConfig",
     "rest_framework",
     "rest_framework.authtoken",
+    "reviews.apps.ReviewsConfig",
+    "users.apps.UsersConfig",
+    "restaurants.apps.RestaurantsConfig",\
 ]
 
 MIDDLEWARE = [
