@@ -54,7 +54,7 @@ def parse_category(raw_ctgr_names) -> list:
     category_names = re.sub(pattern, "", raw_ctgr_names)
     categories = category_names.split('/')
     for category in categories:
-        category_ids.append(Category_id[category])
+        category_ids.append(Category_id.get(category, 0))
         
     return category_ids
 
@@ -72,6 +72,7 @@ def load_restaurants_data():
         
         # csv 데이터를 DB에 삽입
         cnt = 0
+        unsaved = []
         for row in reader:
             cnt += 1
             name = row[2]
@@ -83,6 +84,7 @@ def load_restaurants_data():
                 return print("Geocoding error")
             api_addresses = api_response.get('addresses')
             if not api_addresses:
+                unsaved.append(row)
                 print(f"{cnt}: {name} not saved.")
                 continue
             longitude = api_addresses[0].get('x')
@@ -100,6 +102,8 @@ def load_restaurants_data():
             new_restaurant.save()
             print(f"{cnt}: {name} saved.")
         print("All restaurants are saved successfully.")
+        print("Unsaved restaurants:")
+        print(unsaved)
         
 
 if __name__ == "__main__":

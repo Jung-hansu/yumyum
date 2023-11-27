@@ -48,8 +48,11 @@ class RestaurantInfoView(APIView):
 
 ############## 시간 기준 필터링 기능 추가 필요 ###############
 ############## 크롤링으로 키워드 기반 필터링 기능(분위기, 가격 등) 추가 필요 ###############
+############## 그 식당이 문을 닫으면 같은 카테고리 식당을 거리기반 정렬해서 추천 #############
 class RestaurantFilterView(APIView):
     def get(self, request):
+        print('hi')
+        user_restaurant_name = request.GET.get('restaurant_name')
         user_category = request.GET.getlist('category')
         user_longitude = request.GET.get('longitude')
         user_latitude = request.GET.get('latitude')
@@ -59,7 +62,8 @@ class RestaurantFilterView(APIView):
         print(user_category, user_latitude, user_longitude)
 
         # 요청에 해당하는 query 작성
-        query = Q(location__distance_lte=(user_location, D(km=1)))  # 반경 1km
+        query = Q(name__contains=user_restaurant_name) # 이름 검색
+        query &= Q(location__distance_lte=(user_location, D(km=1)))  # 반경 1km
         for category_id in user_category:
             query &= Q(category__contains=[category_id])
 

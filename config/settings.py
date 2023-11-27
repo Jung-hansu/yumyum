@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "reviews.apps.ReviewsConfig",
     "users.apps.UsersConfig",
-    "restaurants.apps.RestaurantsConfig",\
+    "restaurants.apps.RestaurantsConfig",
 ]
 
 MIDDLEWARE = [
