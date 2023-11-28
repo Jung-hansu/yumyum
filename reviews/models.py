@@ -4,7 +4,7 @@ from users.models import User
 
 class Review(models.Model):
     review_id = models.AutoField(primary_key=True)
-    restaurant = models.ForeignKey(Restaurant, models.DO_NOTHING)
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     user = models.ForeignKey(User, models.DO_NOTHING)
     stars = models.IntegerField()
     contents = models.CharField(max_length=500, blank=True, null=True)
