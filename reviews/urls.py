@@ -1,16 +1,12 @@
-from django.contrib import admin
 from django.urls import path
 from reviews.views import *
 
 urlpatterns = [
-    path('restaurant/<int:id>/', info , name="restaurant-info"),
-    path('restaurant/<int:restaurant_id>/reviews/wirte', write_review, name = "write-review"),
-    # path('', ), #리뷰 남기기
-    # path('restaurant/{restaurant_id}/', ), #리뷰 조회
-    # path('{review_id}', ), #리뷰 삭제
+    path('restaurant/<int:restaurant_id>/', ReviewListView.as_view()),  #리뷰 조회
+    path('write/', WriteReivew.as_view()),   #리뷰 남기기
+    path('<int:review_id>/', DeleteReview.as_view()),   #리뷰 삭제
+    path('thread/', ReviewThread.as_view()),   #스레드
 
-    # path('stars/', views.starAverage),
-    # path('stars/input', views.inputData),
     # path('category/', views.getCategory),
     # path('mood/', views.getMood),
 ]
