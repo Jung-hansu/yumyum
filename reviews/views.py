@@ -76,10 +76,18 @@ class ReviewThread(APIView):  #thread 만들기
         reviews = Review.objects.annotate(
             distance=Distance('restaurant__location', user_location)
         ).filter(distance__lte=D(km=1)).order_by('created_at')
-        for r in reviews:
-            print(r.review_id)
-        serializer = ReviewSerializer(reviews, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        review_list = []
+        for review in reviews:
+            review_list.append({
+                "review_id": review.review_id,
+                "stars": review.stars,
+                "contents": review.contents,
+                "created_at": review.created_at,
+                "updated_at": review.updated_at,
+            })
+        # serializer = ReviewSerializer(reviews, many=True)
+        return Response({"review_list":review_list}, status=status.HTTP_200_OK)
 
         
     """"
