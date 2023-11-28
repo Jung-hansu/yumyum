@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,7 +31,7 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["yumyum-backend-ff68391425b9.herokuapp.com","*"]
+ALLOWED_HOSTS = ["yumyum-backend-ff68391425b9.herokuapp.com", "*"]
 
 
 # Application definition
@@ -91,9 +92,12 @@ DATABASES = {
         "USER": os.environ["DB_USER"],
         "PASSWORD": os.environ["DB_PASSWORD"],
         "HOST": os.environ["DB_HOST"],
-        "PORT": os.environ["DB_PORT"],
+        "PORT": "5432",
     }
 }
+
+db_from_env = dj_database_url.config(conn_max_age=600)
+DATABASES["default"].update(db_from_env)
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -154,14 +158,14 @@ GDAL_LIBRARY_PATH = os.getenv("GDAL_LIBRARY_PATH")
 GEOS_LIBRARY_PATH = os.getenv("GEOS_LIBRARY_PATH")
 
 # User - session 관련 settings
-ACCOUNT_SESSION_REMEMBER = True # 창 종료해도 세션 유지
-SESSION_COOKIE_AGE = 3600       # 세션 유지 시간 1시간
+ACCOUNT_SESSION_REMEMBER = True  # 창 종료해도 세션 유지
+SESSION_COOKIE_AGE = 3600  # 세션 유지 시간 1시간
 
 # 커스텀 User 모델 설정
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = "users.User"
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
     ]
 }
