@@ -4,7 +4,7 @@ django.setup()
 
 from django.contrib.gis.geos import GEOSGeometry
 from restaurants.models import Restaurant
-from Naver_API import geocoding
+from utils.naver_map_api import geocoding
 import csv, re
 
 Category_id ={
