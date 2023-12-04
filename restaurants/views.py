@@ -51,7 +51,6 @@ class RestaurantInfoView(APIView):
 ############## 그 식당이 문을 닫으면 같은 카테고리 식당을 거리기반 정렬해서 추천 #############
 class RestaurantFilterView(APIView):
     def get(self, request):
-        print('hi')
         user_restaurant_name = request.GET.get('restaurant_name')
         user_category = request.GET.getlist('category')
         user_longitude = request.GET.get('longitude')
@@ -59,7 +58,6 @@ class RestaurantFilterView(APIView):
         if not (user_longitude and user_latitude):
             return Response({"error": "Invalid request. Please check your input data"}, status=status.HTTP_400_BAD_REQUEST)
         user_location = Point((float(user_longitude), float(user_latitude)), srid=4326)
-        print(user_category, user_latitude, user_longitude)
 
         # 요청에 해당하는 query 작성
         query = Q(name__contains=user_restaurant_name) # 이름 검색
@@ -168,5 +166,28 @@ class RestaurantManagerView(APIView):
         pass
 
 class RestaurantManagementView(APIView):
-    def post(self, request, restaurant_id):
-        pass
+    # 식당 정보 변경
+    @transaction.atomic
+    def put(self, request, restaurant_id):
+        user = request.user
+        restaurant = Restaurant.objects.filter(restaurant_id=restaurant_id).first()
+        if not user.is_staff: # 매니저 존재시 매니저 여부로 확인
+            return Response({"error":"Unauthorized access"}, status=status.HTTP_403_FORBIDDEN)
+        if not restaurant:
+            return Response({"error":"Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        day_of_week = request.data.get('day_of_week')
+        start_time = request.data.get('start_time')
+        end_time = request.data.get('end_time')
+        etc_reason = request.data.get('etc_reason')
+        restaurant.operating_hour = {
+            "day_of_week":day_of_week,
+            "start_time":start_time,
+            "end_time":end_time,
+            "etc_reason":etc_reason,
+        }
+        restaurant.save()
+        return Response({
+            "message":"Update restaurant operating hour successful",
+            "operating_hour":restaurant.operating_hour,
+            }, status=status.HTTP_200_OK)
