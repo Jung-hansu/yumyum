@@ -9,11 +9,16 @@ class Restaurant(models.Model):
     category = ArrayField(models.IntegerField())
     longitude = models.DecimalField(max_digits=10, decimal_places=7)
     latitude = models.DecimalField(max_digits=10, decimal_places=7)
-    # location = models.GeometryField(srid=4326)
+    location = models.GeometryField(srid=4326)
     address = models.CharField()
 
-    queue = models.ManyToManyField('Reservation', through='ReservationQueue' , related_name='restaurant_set', blank=True)
-    
+    queue = models.ManyToManyField(
+        "Reservation",
+        through="ReservationQueue",
+        related_name="restaurant_set",
+        blank=True,
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -21,25 +26,31 @@ class Restaurant(models.Model):
         managed = False
         db_table = "Restaurant"
 
+
 # Restaurant - User 관계의 중간테이블
 class Reservation(models.Model):
     reservation_id = models.AutoField(primary_key=True)
-    restaurant = models.ForeignKey('Restaurant', on_delete=models.CASCADE)
-    user = models.ForeignKey('users.User', on_delete=models.CASCADE, null=True, blank=True)
+    restaurant = models.ForeignKey("Restaurant", on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        "users.User", on_delete=models.CASCADE, null=True, blank=True
+    )
     phone_number = models.CharField(max_length=11, null=True, blank=True)
     reservation_date = models.DateField(auto_now_add=True)
 
     class Meta:
-        ordering = ['reservation_id']
+        ordering = ["reservation_id"]
+
 
 # Restaurant - Reservation 관계의 중간테이블
 class ReservationQueue(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE)
-    user = models.ForeignKey('users.User', on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(
+        "users.User", on_delete=models.CASCADE, null=True, blank=True
+    )
 
     class Meta:
-        unique_together = ('reservation', 'restaurant')
+        unique_together = ("reservation", "restaurant")
 
 
 class Manager(models.Model):
