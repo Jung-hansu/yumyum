@@ -9,7 +9,7 @@ class Restaurant(models.Model):
     category = ArrayField(models.IntegerField())
     longitude = models.DecimalField(max_digits=10, decimal_places=7)
     latitude = models.DecimalField(max_digits=10, decimal_places=7)
-    # location = models.GeometryField(srid=4326)
+    location = models.GeometryField(srid=4326)
     address = models.CharField()
 
     queue = models.ManyToManyField('Reservation', through='ReservationQueue' , related_name='restaurant_set', blank=True)
