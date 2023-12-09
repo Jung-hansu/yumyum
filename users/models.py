@@ -11,20 +11,20 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 
 # User 클래스에서 사용할 유저데이터 매니지먼트 클래스
 class UserManager(BaseUserManager):
-    def create_user(self, name, phone_number, id, password=None):
-        if not (name, phone_number, id):
+    def create_user(self, name, phone_number, password=None):
+        if not (name, phone_number):
             raise ValueError("Fields must be set")
         for user in User.objects.all():
-            if phone_number == user.phone_number or (id == user.id and password == user.password):
+            if phone_number == user.phone_number or password == user.password:
                 return None
 
-        user = self.model(name=name, phone_number=phone_number, id=id)
+        user = self.model(name=name, phone_number=phone_number)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, name, phone_number, id, password):
-        user = self.create_user(name, phone_number, id, password)
+    def create_superuser(self, name, phone_number, password):
+        user = self.create_user(name, phone_number, password)
         user.is_superuser = True
         user.is_staff = True
         user.save(using=self._db)
@@ -34,17 +34,16 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     user_id = models.AutoField(primary_key=True)
     name = models.CharField()
-    phone_number = models.CharField(max_length=11)
-    id = models.CharField(db_column="ID", max_length=30, blank=True, unique=True)  # Field name made lowercase.
+    phone_number = models.CharField(max_length=11, unique=True)
     reservations = models.ManyToManyField('restaurants.Restaurant', through='restaurants.Reservation', related_name='user_set', blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     last_login = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    USERNAME_FIELD = "id"
-    REQUIRED_FIELDS = ["name", "phone_number"]
+    USERNAME_FIELD = "phone_number"
+    REQUIRED_FIELDS = ["name"]
     objects = UserManager()
 
     def __str__(self):
@@ -53,7 +52,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     class Meta:
         managed = False
         db_table = "User"
-
 
 ########## Django default models ##########
 class AuthGroup(models.Model):

@@ -2,11 +2,14 @@ from rest_framework import serializers
 from .models import User
 
 class UserSerializer(serializers.ModelSerializer):
-    # views.py에서 따로 null 검사
-    name = serializers.CharField(allow_null=True)
-    phone_number = serializers.CharField(allow_null=True)
-
     class Meta:
         model = User
-        fields = ['name', 'phone_number', 'id', 'password']
+        fields = ['phone_number', 'password']
         extra_kwargs = {"password": {"write_only":True}}
+        
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            name=validated_data['name'],
+            password=validated_data['password']
+        )
+        return user
