@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from restaurants.views import *
 
 urlpatterns = [
@@ -8,4 +8,8 @@ urlpatterns = [
     path('<int:restaurant_id>/waitings/', RestaurantWaitingView.as_view()), # 예약
     path('manage/', RestaurantManagerView.as_view()),                       # 식당 매니저
     path('manage/<int:restaurant_id>/', RestaurantManagementView.as_view()),# 식당 관리
+    path('<int:restaurant_id>/reviews/', include('reviews.urls')),          # 리뷰로 연결
 ]
+
+
+
