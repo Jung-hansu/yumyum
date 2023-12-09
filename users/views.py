@@ -1,15 +1,17 @@
+import jwt
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+# from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
-from django.db import transaction
 from django.db.models import F
+from django.db import transaction
 from datetime import datetime
 
-from .models import User
 from restaurants.models import Restaurant, Reservation
-from .serializers import UserSerializer
+from .models import User
+from .serializers import *
 
 # Create your views here.
 class SignupView(APIView):
@@ -17,28 +19,70 @@ class SignupView(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
-            # 근데 여기에 걸릴 일이 없음. 추후 수정할 것
-            if None in serializer.validated_data:
-                return Response({"error":"All fields are required"}, status=status.HTTP_400_BAD_REQUEST)
-            
+            name = request.data.get('name')
             phone_number = serializer.validated_data['phone_number']
+            password = serializer.validated_data['password']
+            
+            # 입력값 제한
+            if len(name) < 1 or len(phone_number) != 11:
+                return Response(
+                    {
+                        "status": "error",
+                        "error": {
+                            "code": 400,
+                            "message": "Missing Required Fields",
+                            "details": "Please provide values for all required fields"
+                        }
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            # phone_number 중복 제한
             if User.objects.filter(phone_number=phone_number).exists():
-                return Response({"error":"Phone number already exists"}, status=status.HTTP_409_CONFLICT)
-
-            min_id_len = 4
+                return Response(
+                    {
+                        "status": "error",
+                        "error": {
+                            "code": 409,
+                            "message": "Conflict",
+                            "details": "Phone number is already associated with an existing account",
+                        }
+                    }, status=status.HTTP_409_CONFLICT)
+            # password 길이 제한
             min_password_len = 4
-            id_len = len(serializer.validated_data['id'])
-            password_len = len(serializer.validated_data['password'])
-            if id_len < min_id_len:
-                return Response({"error":f"ID must contain at least {min_id_len} characters"}, status=status.HTTP_400_BAD_REQUEST)
-            if password_len < min_password_len:
-                return Response({"error":f"Password must contain at least {min_password_len} characters"}, status=status.HTTP_400_BAD_REQUEST)
+            if len(password) < min_password_len:
+                return Response(
+                    {
+                        "status": "error",
+                        "error": {
+                            "code": 400,
+                            "message": "Bad Request",
+                            "details": f"Password must be at least {min_password_len} characters long",
+                        }
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
+            # jwt 토큰 접근
             user = serializer.save()
-            user.set_password(serializer.validated_data['password'])
+            user.name = name
             user.save()
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({"message": "Signup successful", "Token": token.key}, status=status.HTTP_201_CREATED)
+            
+            token = TokenObtainPairSerializer.get_token(user)
+            refresh_token = str(token)
+            access_token = str(token.access_token)
+            res = Response(
+                {
+                    "status": "success",
+                    "message": "User registration successful",
+                    "data": {
+                        "user": serializer.data,
+                        "token": {
+                            "access": access_token,
+                            "refresh": refresh_token,
+                        }
+                    }
+                }, status=status.HTTP_201_CREATED)
+            
+            # jwt 토큰 쿠키에 저장
+            res.set_cookie("access", access_token, httponly=True)
+            res.set_cookie("refresh", refresh_token, httponly=True)
+            return res
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -48,59 +92,138 @@ class LoginView(APIView):
     def post(self, request):
         # 중복 로그인 검사
         if request.user.is_authenticated:
-            return Response({"error":"User is already logged in"}, status=status.HTTP_409_CONFLICT)
+            return Response(
+                {
+                    "status": "error",
+                    "error": {
+                        "code": 409,
+                        "message": "Conflict",
+                        "details": "User is already logged in"
+                    }
+                }, status=status.HTTP_409_CONFLICT)
 
         # 로그인
-        user = authenticate(request, username=request.data.get('id'), password=request.data.get('password'))
-        if user is None:
-            return Response({"error":"Invalid ID or PW"}, status=status.HTTP_401_UNAUTHORIZED)
-        token, created = Token.objects.get_or_create(user=user)
-        user.last_login = datetime.now()
-        user.save()
-        return Response({"Token":token.key, "messages":"Login successful"}, status=status.HTTP_200_OK)
-
+        user = authenticate(request, username=request.data.get('phone_number'), password=request.data.get('password'))
+        if user:
+            serializer = UserSerializer(user)
+            user.last_login = datetime.now()
+            user.save()
+            
+            # jwt 토큰 접근
+            token = TokenObtainPairSerializer.get_token(user)
+            refresh_token = str(token)
+            access_token = str(token.access_token)
+            res = Response(
+                {
+                    "status": "success",
+                    "message": "User login successful",
+                    "data": {
+                        "user": serializer.data,
+                        "token": {
+                            "access": access_token,
+                            "refresh": refresh_token,
+                        }
+                    }
+                }, status=status.HTTP_200_OK)
+            #jwt 토큰 쿠키에 저장
+            res.set_cookie("access", access_token, httponly=True)
+            res.set_cookie("refresh", refresh_token, httponly=True)
+            return res
+    
+        return Response(
+            {
+                "status": "error",
+                "error": {
+                    "code": 400,
+                    "message": "Invalid Credentials",
+                    "details": "The provided phone number or password is invalid",
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 class LogoutView(APIView):
     @transaction.atomic
     def post(self, request):
         user = request.user
-        if user.is_authenticated:
-            try:
-                token = Token.objects.get(user=user)
-                token.delete()
-                return Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
-            except Token.DoesNotExist: pass
-        return Response({"error":"Session expired or not found"}, status=status.HTTP_401_UNAUTHORIZED)
+        if not user.is_authenticated:
+            return Response(
+                {
+                    "status": "error",
+                    "error": {
+                        "code": 401,
+                        "message": "Unauthorized",
+                        "details": "JWT validation failed or token is expired",
+                        "suggestion": "Please ensure you have a valid JWT token and try again",
+                    }
+                }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        # RefreshToken()
+        res = Response(
+            {
+                "status": "success",
+                "message": "Logout successful",
+            }, status=status.HTTP_200_OK)
+        res.delete_cookie("access")
+        res.delete_cookie("refresh")
+        return res
 
 
 class UserInfoView(APIView):
     # 유저 조회
     def get(self, request, user_id):
         user = User.objects.filter(user_id=user_id).first()
-        if request.user.is_authenticated and request.user == user:
-            name = user.name
-            phone_number = user.phone_number
+        if not user:
             return Response({
-                	"message":"User information retrieved successfully",
-                    "name": name,
-                    "phone_number": phone_number
-                }, status=status.HTTP_200_OK)
-        return Response({"error":"User has no authorization"}, status=status.HTTP_401_UNAUTHORIZED)
+                "status": "error",
+                "error": {
+                    "code": 404,
+                    "message":"Not found",
+                    "details": "User not found"
+                }
+            }, status=status.HTTP_404_NOT_FOUND) ###################################################3
+        if request.user.is_authenticated and request.user == user:
+            return Response({
+                "status": "success",
+                "message":"User information retrieved successfully",
+                "user": {
+                    "userid":user_id,
+                    "name": user.name,
+                    "phone_number": user.phone_number
+                }
+            }, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "error":"User has no authorization"}, status=status.HTTP_401_UNAUTHORIZED)
 
     # 유저 삭제
     @transaction.atomic
     def delete(self, request, user_id):
-        user = request.user
+        user = User.objects.filter(user_id=user_id).first()
+        if not user:
+            return Response({
+                "status": "error",
+                "error": {
+                    "code": 404,
+                    "message":"Not found",
+                    "details": "User not found"
+                }
+            }, status=status.HTTP_404_NOT_FOUND)
         if user.is_authenticated:
-            token = Token.objects.filter(user_id=user_id).first()
-            if not token :
-                Response({"error":"User not found"}, status=status.HTTP_404_NOT_FOUND)
-            if user != token.user:
-                return Response({"error":"User has no authorization"}, status=status.HTTP_401_UNAUTHORIZED)
             user.delete()
-            token.delete()
-            return Response({"message":"User successfully deleted"}, status=status.HTTP_204_NO_CONTENT)
-        return Response({"error":"Session expired or not found"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {
+                    "status": "success",
+                    "message": "User successfully deleted"
+                }, status=status.HTTP_204_NO_CONTENT)
+            
+        return Response(
+            {
+                "status": "error",
+                "error": {
+                    "code": 401,
+                    "message": "Unauthorized",
+                    "details": "Access token is missing or invalid"
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserWaitingView(APIView):
@@ -114,6 +237,7 @@ class UserWaitingView(APIView):
                 queue = restaurant.queue
                 position = queue.filter(reservation_id__lte=F('reservation_id')).count()
                 reservation_list.append({
+                    "restaurant_id": restaurant.restaurant_id,
                     "restaurant": restaurant.name,
                     "position": position,
                 })

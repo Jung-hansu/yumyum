@@ -5,6 +5,7 @@ from django.contrib.gis.geos import Point, GEOSGeometry
 from django.contrib.gis.measure import D
 from django.db.models import Q
 from django.db import transaction
+from datetime import datetime
 
 from .serializers import RestaurantSerializer
 from .models import Restaurant, Reservation
@@ -64,6 +65,8 @@ class RestaurantFilterView(APIView):
         query &= Q(location__distance_lte=(user_location, D(km=1)))  # 반경 1km
         for category_id in user_category:
             query &= Q(category__contains=[category_id])
+        now = datetime()
+        print(now)
 
         restaurant_infos = []
         restaurants = Restaurant.objects.filter(query)
