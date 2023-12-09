@@ -33,8 +33,11 @@ django-crontab==0.7.1
 django-heroku==0.3.1
 djangorestframework==3.14.0
 djangorestframework-gis==0.18
+djangorestframework-jwt==1.11.0
 djangorestframework-simplejwt==5.3.1
+drf-extra-fields==3.7.0
 drf-yasg==1.21.5
+filetype==1.2.0
 fonttools==4.39.4
 frozenlist==1.4.0
 GDAL==3.8.0
@@ -62,11 +65,11 @@ Pillow==9.5.0
 prompt-toolkit==3.0.39
 protobuf==4.23.4
 psycopg2==2.9.6
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.6
 pyasn1==0.5.0
 pyasn1-modules==0.3.0
 pycparser==2.21
-PyJWT==2.8.0
+PyJWT==1.7.1
 pyOpenSSL==23.2.0
 pyparsing==3.0.9
 python-dateutil==2.8.2
