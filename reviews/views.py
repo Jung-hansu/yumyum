@@ -38,10 +38,11 @@ class WriteReivew(APIView):
         user = request.user
         if user.is_authenticated:
             restaurant_id = request.data.get('restaurant_id')
+            restaurant_name = request.data.get('restaurant_name')
             stars = request.data.get('stars')
             menu = request.data.get('menu')
             contents = request.data.get('contents')
-            if not (restaurant_id,stars,menu,contents):
+            if not (restaurant_id,restaurant_name,stars,menu,contents):
                 return Response({"error": "평점과 리뷰 내용이 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
             try:
                 restaurant = Restaurant.objects.get(restaurant_id=restaurant_id)
