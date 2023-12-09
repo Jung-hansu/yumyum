@@ -1,6 +1,7 @@
 from django.contrib.gis.db import models
 from restaurants.models import Restaurant
 from users.models import User
+from django.contrib.postgres.fields import ArrayField
 
 class Review(models.Model):
     review_id = models.AutoField(primary_key=True)
@@ -8,6 +9,7 @@ class Review(models.Model):
     user = models.ForeignKey(User, models.DO_NOTHING)
     stars = models.IntegerField()
     contents = models.CharField(max_length=500, blank=True, null=True)
+    menu = ArrayField(models.CharField(max_length=100))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

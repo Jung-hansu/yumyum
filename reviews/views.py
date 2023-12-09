@@ -24,6 +24,7 @@ class ReviewListView(APIView):
                     review_info = {
                         "review_id": review.review_id,
                         "stars": review.stars,
+                        "menu" : review.menu,
                         "contents": review.contents,
                         "created_at": review.created_at,
                         "updated_at": review.updated_at,
@@ -38,15 +39,16 @@ class WriteReivew(APIView):
         if user.is_authenticated:
             restaurant_id = request.data.get('restaurant_id')
             stars = request.data.get('stars')
+            menu = request.data.get('menu')
             contents = request.data.get('contents')
-            if not (restaurant_id,stars,contents):
+            if not (restaurant_id,stars,menu,contents):
                 return Response({"error": "평점과 리뷰 내용이 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
             try:
                 restaurant = Restaurant.objects.get(restaurant_id=restaurant_id)
             except Restaurant.DoesNotExist:
                 return Response({"error": "레스토랑을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
 
-            Review.objects.get_or_create(user=user, restaurant=restaurant, stars=stars, contents=contents)
+            Review.objects.get_or_create(user=user, restaurant=restaurant, stars=stars, menu=menu, contents=contents)
             return Response({"message":"Review regists successfully"}, status=status.HTTP_200_OK)
         return Response({"error":"Session expired or not found"}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -82,6 +84,7 @@ class ReviewThread(APIView):  #thread 만들기
             review_list.append({
                 "review_id": review.review_id,
                 "stars": review.stars,
+                "menu" : review.menu,
                 "contents": review.contents,
                 "created_at": review.created_at,
                 "updated_at": review.updated_at,
