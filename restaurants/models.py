@@ -25,6 +25,11 @@ class Restaurant(models.Model):
     class Meta:
         managed = False
         db_table = "Restaurant"
+    
+    def calculate_star_avg(self):
+        # 해당 레스토랑의 리뷰를 기반으로 평균 별점을 계산
+        avg_rating = self.review_set.aggregate(models.Avg('stars'))['stars__avg']
+        return avg_rating if avg_rating is not None else 0
 
 
 # Restaurant - User 관계의 중간테이블

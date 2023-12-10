@@ -8,6 +8,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth import authenticate
 from django.db.models import F
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 from datetime import datetime
 
 from restaurants.models import Restaurant, Reservation
@@ -90,7 +91,7 @@ class SignupView(TokenViewBase):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AuthView(TokenViewBase):
+class AuthView(APIView):
     # 로그인
     @transaction.atomic
     def post(self, request):
@@ -318,43 +319,71 @@ class UserWaitingView(APIView):
             }, status=status.HTTP_200_OK)
     
 class UserReviewListView(APIView):
-    def get(self, request, restaurant_id, user_id):
+    def get(self, request, user_id):
         user = request.user
         if user.is_authenticated:
-            if restaurant_id is not None:
-                restaurant = Restaurant.objects.filter(pk = restaurant_id).first() #Restaurant 가져오기
-                user = User.objects.filter(user_id=user_id).first()
-                if not restaurant:
-                    return Response({"error":"Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
-                review_infos = []
-                reviews = Review.objects.filter(restaurant_id = restaurant)
-                for review in reviews:
-                    review_info = {
-                        "review_id": review.review_id,
-                        "restaurant_id" : restaurant.restaurant_id,
-                        "restaurant_name" : restaurant.name,
-                        "stars": review.stars,
-                        "contents": review.contents,
-                        "created_at": review.created_at,
-                        "updated_at": review.updated_at,
-                    }
-                    review_infos.append(review_info)
-                    
-                response_data = {
-                    "user_id" : user.user_id,
-                    "reviews" : review_infos
+            review_infos = []
+            reviews = Review.objects.filter(user_id = user)
+            
+            for review in reviews:
+                review_info = {
+                    "review_id": review.review_id,
+                    "restaurant_id" : review.restaurant.restaurant_id,
+                    "name" : review.restaurant.name,
+                    "stars": review.stars,
+                    "contents": review.contents,
+                    "created_at": review.created_at,
+                    "updated_at": review.updated_at,
                 }
-                return Response({"ReviewList" : response_data}, status=status.HTTP_200_OK)
-            return Response({"error" : "Review not found"}, status = status.HTTP_404_NOT_FOUND)
+                review_infos.append(review_info)
+                
+            responst_data = {
+                "user_id" : user.user_id,
+                "reviews" : review_infos
+            }
+            return Response(responst_data, status=status.HTTP_200_OK)
+        error_response = {
+                "status":"error",
+                "error" : {
+                    "code": 401,
+                    "message": "Unathorized",
+                    "details": "User not logged in or unauthorized to access this resource"
+                }
+            }
+        return Response(error_response, status = status.HTTP_401_UNAUTHORIZED)
         
 class DeleteReview(APIView):
-    def delete(self, request, review_id):
+    def delete(self, request, user_id, review_id):
         user = request.user
         if user.is_authenticated:
             try:
-                review = Review.objects.get(pk=review_id)
+                review = Review.objects.get(user=user, pk=review_id)
+                responst_data = {
+                    "status": "success",
+                    "message": "Review succesfully deleted",
+                    "data": {
+                        "user_id": user.user_id,
+                        "review_id": review.review_id
+                    }
+                }
                 review.delete()
-                return Response({"message": "리뷰가 삭제되었습니다."}, status=status.HTTP_204_NO_CONTENT)
+                return Response(responst_data, status=status.HTTP_204_NO_CONTENT)
             except Review.DoesNotExist:
-                return Response({"error": "리뷰가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
-        return Response({"error":"Session expired or not found"}, status=status.HTTP_400_BAD_REQUEST)
+                responst_data = {
+                    "ststus": "error",
+                    "error": {
+                        "code": 404,
+                        "message": "Not Found",
+                        "details": "Review ID not found"
+                    }
+                }
+                return Response(responst_data, status=status.HTTP_404_NOT_FOUND)
+        error_data = {
+            "ststus": "error",
+            "error": {
+                "code": 401,
+                "message": "Unauthorized",
+                "details": "User does not have permission to delete this review"
+            }
+        }        
+        return Response(error_data, status=status.HTTP_401_UNAUTHORIZED)        
