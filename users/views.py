@@ -22,7 +22,7 @@ class SignupView(TokenViewBase):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
-            name = request.data.get('name')
+            name = serializer.validated_data['name']
             phone_number = serializer.validated_data['phone_number']
             password = serializer.validated_data['password']
             
@@ -60,10 +60,7 @@ class SignupView(TokenViewBase):
                             "details": f"Password must be at least {min_password_len} characters long",
                         }
                     }, status=status.HTTP_400_BAD_REQUEST)
-
             user = serializer.save()
-            user.name = name
-            user.save()
             
             # jwt 토큰 접근
             refresh_token = TokenObtainPairSerializer.get_token(user)
@@ -108,7 +105,7 @@ class AuthView(APIView):
 
         user = authenticate(request, username=request.data.get('phone_number'), password=request.data.get('password'))
         if user:
-            serializer = UserSerializer(user)
+            # serializer = UserSerializer(user)
             user.last_login = datetime.now()
             user.save()
             # jwt 토큰 접근
@@ -119,7 +116,7 @@ class AuthView(APIView):
                     "status": "success",
                     "message": "User login successful",
                     "data": {
-                        "user": serializer.data,
+                        "user": user.name,
                         "token": {
                             "access": str(access_token),
                             "refresh": str(refresh_token),
