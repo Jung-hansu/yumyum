@@ -44,14 +44,18 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.gis",
+    
+    #apps
+    "reviews.apps.ReviewsConfig",
+    "users.apps.UsersConfig",
+    "restaurants.apps.RestaurantsConfig",
+    
+    #rest_framework
     "rest_framework",
     "rest_framework.authtoken",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "drf_yasg",
-    "reviews.apps.ReviewsConfig",
-    "users.apps.UsersConfig",
-    "restaurants.apps.RestaurantsConfig",
 ]
 
 MIDDLEWARE = [
@@ -169,18 +173,19 @@ SESSION_COOKIE_AGE = 3600  # 세션 유지 시간 1시간
 AUTH_USER_MODEL = 'users.User'
 
 
-from datetime import timedelta
-
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
-    # 'DEFAULT_PERMISSION_CLASSES': (
-    #     'rest_framework.permissions.IsAuthenticated', # 인증된 사용자만 접근
-    #     'rest_framework.permissions.IsAdminUser', # 관리자만 접근
-    #     'rest_framework.permissions.AllowAny',  # 누구나 접근
-    # ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        # 'rest_framework.permissions.IsAuthenticated', # 인증된 사용자만 접근
+        # 'rest_framework.permissions.IsAdminUser', # 관리자만 접근
+        'rest_framework.permissions.AllowAny',  # 누구나 접근
+    ],
 }
+
+from datetime import timedelta
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),

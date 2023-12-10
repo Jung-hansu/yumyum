@@ -68,7 +68,7 @@ class RestaurantInfoView(APIView):
                     "operating_hours": restaurant.operating_hour,
                     "created_at": restaurant.created_at,
                     "updated_at": restaurant.updated_at,
-                    # "waiting": len(restaurant.queue.all()),
+                    "waiting": len(restaurant.queue.all()),
                 }
             }, status=status.HTTP_200_OK)
         return Response({

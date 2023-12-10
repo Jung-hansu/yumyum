@@ -1,6 +1,7 @@
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenViewBase
@@ -90,7 +91,7 @@ class SignupView(TokenViewBase):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AuthView(TokenViewBase):
+class AuthView(APIView):
     # 로그인
     @transaction.atomic
     def post(self, request):
@@ -146,7 +147,6 @@ class AuthView(TokenViewBase):
     @transaction.atomic
     def delete(self, request):
         user = request.user
-        print(user)
         if user.is_authenticated:
             print(user)
             refresh_token = request.data.get('refresh')
