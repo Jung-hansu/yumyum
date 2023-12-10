@@ -19,7 +19,6 @@ class Migration(migrations.Migration):
                 ('user_id', models.AutoField(primary_key=True, serialize=False)),
                 ('name', models.CharField()),
                 ('phone_number', models.CharField(max_length=11)),
-                ('id', models.CharField(blank=True, db_column='ID', max_length=30, unique=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('is_admin', models.BooleanField(default=False)),

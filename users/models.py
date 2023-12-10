@@ -38,7 +38,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     reservations = models.ManyToManyField('restaurants.Restaurant', through='restaurants.Reservation', related_name='user_set', blank=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
-    last_login = models.DateTimeField()
+    last_login = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
