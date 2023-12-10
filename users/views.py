@@ -186,7 +186,7 @@ class UserInfoView(APIView):
                 "status": "success",
                 "message":"User information retrieved successfully",
                 "user": {
-                    "userid":user_id,
+                    "user_id":user_id,
                     "name": user.name,
                     "phone_number": user.phone_number
                 }
@@ -242,14 +242,15 @@ class UserWaitingView(APIView):
         if user.is_authenticated:
             for restaurant in user.reservations.all():
                 queue = restaurant.queue
-                position = queue.filter(reservation_id__lte=F('reservation_id')).count()
+                position = queue.filter(reservation_id__lte=queue.get(user=user).reservation_id).count()
                 reservation_list.append({
                     "restaurant_id": restaurant.restaurant_id,
                     "restaurant": restaurant.name,
                     "position": position,
                 })
             return Response({
-                "message": "User position retrieved successfully",
+                "status": "success",
+                "message": "User waiting retrieved successfully",
                 "waitings":reservation_list
             }, status=status.HTTP_200_OK)
         return Response(
@@ -302,13 +303,14 @@ class UserWaitingView(APIView):
             if not reservation:
                 return Response({"error":"Reservation not found"}, status=status.HTTP_404_NOT_FOUND)
         
+        reservation_id = reservation.reservation_id
         reservation.delete()
         return Response(
             {
                 "status": "success",
                 "message":"Reservation successfully canceled",
                 "data": {
-                    "reservation_id": reservation.reservation_id
+                    "reservation_id": reservation_id
                 }
             }, status=status.HTTP_200_OK)
     

@@ -35,12 +35,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     user_id = models.AutoField(primary_key=True)
     name = models.CharField()
     phone_number = models.CharField(max_length=11, unique=True)
-    reservations = models.ManyToManyField('restaurants.Restaurant', through='restaurants.Reservation', related_name='user_set', blank=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     last_login = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    reservations = models.ManyToManyField('restaurants.Restaurant', through='restaurants.Reservation', related_name='user_set', blank=True)
 
     USERNAME_FIELD = "phone_number"
     REQUIRED_FIELDS = ["name"]
