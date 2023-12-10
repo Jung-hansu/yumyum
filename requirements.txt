@@ -35,11 +35,11 @@ djangorestframework==3.14.0
 djangorestframework-gis==0.18
 djangorestframework-jwt==1.11.0
 djangorestframework-simplejwt==5.3.1
-drf-extra-fields==3.7.0
 drf-yasg==1.21.5
-filetype==1.2.0
 fonttools==4.39.4
 frozenlist==1.4.0
+geographiclib==2.0
+geopy==2.4.1
 gunicorn==21.2.0
 h11==0.14.0
 httpcore==0.17.3

@@ -4,13 +4,16 @@ from django.contrib.gis.db import models
 
 class Restaurant(models.Model):
     restaurant_id = models.AutoField(primary_key=True)
-    operating_hour = models.JSONField()
     name = models.CharField(max_length=30)
     category = ArrayField(models.IntegerField())
     longitude = models.DecimalField(max_digits=10, decimal_places=7)
     latitude = models.DecimalField(max_digits=10, decimal_places=7)
     location = models.GeometryField(srid=4326)
     address = models.CharField()
+    day_of_week = ArrayField(models.IntegerField())
+    start_time = models.TimeField(null=True)
+    end_time = models.TimeField(null=True)
+    etc_reason = models.TextField(null=True, blank=True)
 
     queue = models.ManyToManyField(
         "Reservation",

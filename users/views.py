@@ -90,7 +90,6 @@ class AuthView(APIView):
     # 로그인
     @transaction.atomic
     def post(self, request):
-        print(request.user)
         # 중복 로그인 검사
         if request.user.is_authenticated:
             return Response(

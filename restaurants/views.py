@@ -1,13 +1,14 @@
+from geopy.distance import distance
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from django.contrib.gis.geos import Point, GEOSGeometry
 from django.contrib.gis.measure import D
 from django.db.models import Q
 from django.db import transaction
-from datetime import datetime
 
-from .serializers import RestaurantSerializer
+from .serializers import RestaurantSerializer, OperatingHourSerializer
 from .models import Restaurant, Reservation
 from reviews.models import Review
 from users.models import User
@@ -65,10 +66,10 @@ class RestaurantInfoView(APIView):
                     "longitude": restaurant.longitude,
                     "latitude": restaurant.latitude,
                     "address": restaurant.address,
+                    "waiting": len(restaurant.queue.all()),
                     "operating_hours": restaurant.operating_hour,
                     "created_at": restaurant.created_at,
                     "updated_at": restaurant.updated_at,
-                    "waiting": len(restaurant.queue.all()),
                 }
             }, status=status.HTTP_200_OK)
         return Response({
@@ -122,6 +123,52 @@ class RestaurantFilterView(APIView):
             "restaurant": restaurant_infos,
         },status=status.HTTP_200_OK)
     
+class RestaurantAlternativeView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request):
+        restaurant_id = request.GET.get('restaurant_id')
+        restaurant = Restaurant.objects.filter(restaurant_id=restaurant_id).first()
+        if not restaurant:
+            return Response({
+                "status": "error",
+                "error": {
+                    "code": 404,
+                    "message": "Not Found",
+                    "details": "Restaurant not found",
+                }
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        latitude = restaurant.latitude
+        longitude = restaurant.longitude
+        location = Point(float(longitude), float(latitude), srid=4326)
+        categories = restaurant.category
+        
+        query = Q(location__distance_lte=(location,D(km=1)))
+        for category_id in categories:
+            query &= Q(category__contains=[category_id])
+            
+        restuarant_list = []
+        for alter_restaurant in Restaurant.objects.filter(query):
+            point1 = (float(latitude), float(longitude))
+            point2 = (float(alter_restaurant.latitude), float(alter_restaurant.longitude))
+            dist = distance(point1, point2).meters
+            
+            restuarant_list.append({
+                "restaurant_id": alter_restaurant.restaurant_id,
+                "name": alter_restaurant.name,
+                "category": alter_restaurant.category,
+                "day_of_week": alter_restaurant.day_of_week,
+                "start_time": str(alter_restaurant.start_time.strftime("%H:%M")),
+                "end_time": str(alter_restaurant.end_time.strftime("%H:%M")),
+                "etc_reason": alter_restaurant.etc_reason,
+                "distance": f'{dist:.2f}m'
+            })
+        return Response({
+            "status": "success",
+            "message": "Nearby restaurants retrieved successfully",
+            "data": restuarant_list
+        }, status=status.HTTP_200_OK)
+        
 
 class RestaurantWaitingView(APIView):
     # 식당 웨이팅 조회(유저)
@@ -207,31 +254,38 @@ class RestaurantManagerView(APIView):
         pass
 
 class RestaurantManagementView(APIView):
+    permission_classes = [AllowAny]
     # 식당 정보 변경
     @transaction.atomic
     def put(self, request, restaurant_id):
         user = request.user
-        restaurant = Restaurant.objects.filter(restaurant_id=restaurant_id).first()
-        if not user.is_staff: # 매니저 존재시 매니저 여부로 확인
-            return Response({"error":"Unauthorized access"}, status=status.HTTP_403_FORBIDDEN)
-        if not restaurant:
-            return Response({"error":"Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
-        
-        day_of_week = request.data.get('day_of_week')
-        start_time = request.data.get('start_time')
-        end_time = request.data.get('end_time')
-        etc_reason = request.data.get('etc_reason')
-        restaurant.operating_hour = {
-            "day_of_week":day_of_week,
-            "start_time":start_time,
-            "end_time":end_time,
-            "etc_reason":etc_reason,
-        }
-        restaurant.save()
-        return Response({
-            "message":"Update restaurant operating hour successful",
-            "operating_hour":restaurant.operating_hour,
+        serializer = OperatingHourSerializer(data=request.data)
+        if serializer.is_valid():
+            restaurant = Restaurant.objects.filter(restaurant_id=restaurant_id).first()
+            if not user.is_staff: # 매니저 존재시 매니저 여부로 확인
+                return Response({"error":"Unauthorized access"}, status=status.HTTP_403_FORBIDDEN)
+            if not restaurant:
+                return Response({"error":"Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+            day_of_week = serializer.validated_data.get('day_of_week')
+            start_time = serializer.validated_data.get('start_time')
+            end_time = serializer.validated_data.get('end_time')
+            etc_reason = serializer.validated_data.get('etc_reason')
+            
+            restaurant.day_of_week = day_of_week
+            restaurant.start_time = start_time
+            restaurant.end_time = end_time
+            restaurant.etc_reason = etc_reason
+            restaurant.save()
+            return Response({
+                "status": "success",
+                "message":"Update restaurant operating hour successful",
+                "day_of_week": restaurant.day_of_week,
+                "start_time": restaurant.start_time,
+                "end_time": restaurant.end_time,
+                "etc_reason": restaurant.etc_reason
             }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     
 class RestaurantReviewListView(APIView):
