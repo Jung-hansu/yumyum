@@ -66,9 +66,7 @@ class SignupView(TokenViewBase):
             user.save()
             
             # jwt 토큰 접근
-            refresh_token = RefreshToken.for_user(user)
-            refresh_token.save()
-            
+            refresh_token = TokenObtainPairSerializer.get_token(user)
             access_token = refresh_token.access_token
             res = Response(
                 {
