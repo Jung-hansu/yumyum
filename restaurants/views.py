@@ -7,6 +7,7 @@ from django.contrib.gis.geos import Point, GEOSGeometry
 from django.contrib.gis.measure import D
 from django.db.models import Q, Avg
 from django.db import transaction
+from datetime import datetime
 
 from .serializers import RestaurantSerializer, OperatingHourSerializer
 from .models import Restaurant, Reservation
@@ -22,8 +23,8 @@ class CreateRestaurantView(APIView):
             longitude = request.data.get("longitude")
             latitude = request.data.get("latitude")
             try:
-                float(longitude)
-                float(latitude)
+                longitude = float(longitude)
+                latitude = float(latitude)
             except ValueError:
                 return Response({"error": "Invalid input data"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -68,6 +69,7 @@ class RestaurantInfoView(APIView):
                     "latitude": restaurant.latitude,
                     "address": restaurant.address,
                     "waiting": len(restaurant.queue.all()),
+                    "is_24_hours": restaurant.is_24_hours,
                     "day_of_week": restaurant.day_of_week,
                     "start_time": str(restaurant.start_time.strftime("%H:%M")),
                     "end_time": str(restaurant.end_time.strftime("%H:%M")),
@@ -88,6 +90,7 @@ class RestaurantInfoView(APIView):
 ############## 시간 기준 필터링 기능 추가 필요 ###############
 ############## 크롤링으로 키워드 기반 필터링 기능(분위기, 가격 등) 추가 필요 ###############
 ############## 그 식당이 문을 닫으면 같은 카테고리 식당을 거리기반 정렬해서 추천 #############
+############## category getlist말고 ','로 나뉜 문자열로 받기 ######################
 class RestaurantFilterView(APIView):
     def get(self, request):
         user_restaurant_name = request.GET.get('restaurant_name')
@@ -99,40 +102,26 @@ class RestaurantFilterView(APIView):
         user_location = Point((float(user_longitude), float(user_latitude)), srid=4326)
 
         # 요청에 해당하는 query 작성
-        query = Q(name__contains=user_restaurant_name) # 이름 검색
-        query &= Q(location__distance_lte=(user_location, D(km=0.1)))  # 반경 1km
+        now = datetime.now()
+        query = Q(is_24_hours=True) | Q(start_time__lte=now, end_time__gte=now) # 운영시간 확인
+        query &= Q(name__contains=user_restaurant_name)                 # 이름 검색
+        query &= Q(location__distance_lte=(user_location, D(km=0.1)))   # 반경 100m
         for category_id in user_category:
             query &= Q(category__contains=[category_id])
-        # now = datetime()
-        # print(now) ## 시간 기준 검색 활성화하기
         
-        restaurant_infos = []
+        restaurant_ids = []
         restaurants = Restaurant.objects.filter(query)
-        print(len(restaurants))
         for restaurant in restaurants:
-            restaurant_info = {
-                "restaurant_id": restaurant.restaurant_id,
-                "name": restaurant.name,
-                "latitude": restaurant.longitude,
-                "longitude": restaurant.latitude,
-                "category_ids": restaurant.category,
-                "address": restaurant.address,
-                "waiting": len(restaurant.queue.all()),
-                "day_of_week": restaurant.day_of_week,
-                "start_time": str(restaurant.start_time.strftime("%H:%M")),
-                "end_time": str(restaurant.end_time.strftime("%H:%M")),
-                "etc_reason": restaurant.etc_reason,
-            }
+            restaurant_ids.append(restaurant.restaurant_id)
             
-            restaurant_infos.append(restaurant_info)
+        restaurant_ids.sort(key=lambda x : Restaurant.objects.get(pk=x).calculate_star_avg())
         return Response({
             "status": "success",
             "message": "Nearby restaurants retrieved successfully",
-            "restaurant": restaurant_infos,
+            "restaurants": restaurant_ids,
         },status=status.HTTP_200_OK)
     
 class RestaurantAlternativeView(APIView):
-    permission_classes = [AllowAny]
     def get(self, request):
         restaurant_id = request.GET.get('restaurant_id')
         restaurant = Restaurant.objects.filter(restaurant_id=restaurant_id).first()
@@ -156,7 +145,8 @@ class RestaurantAlternativeView(APIView):
             query &= Q(category__contains=[category_id])
             
         restuarant_list = []
-        for alter_restaurant in Restaurant.objects.filter(query):
+        restaurants = Restaurant.objects.filter(query)
+        for alter_restaurant in restaurants:
             point1 = (float(latitude), float(longitude))
             point2 = (float(alter_restaurant.latitude), float(alter_restaurant.longitude))
             dist = distance(point1, point2).meters
@@ -165,6 +155,7 @@ class RestaurantAlternativeView(APIView):
                 "restaurant_id": alter_restaurant.restaurant_id,
                 "name": alter_restaurant.name,
                 "category": alter_restaurant.category,
+                "is_24_hours": alter_restaurant.is_24_hours,
                 "day_of_week": alter_restaurant.day_of_week,
                 "start_time": str(alter_restaurant.start_time.strftime("%H:%M")),
                 "end_time": str(alter_restaurant.end_time.strftime("%H:%M")),
@@ -275,11 +266,13 @@ class RestaurantManagementView(APIView):
             if not restaurant:
                 return Response({"error":"Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
             
+            is_24_hours = serializer.validated_data.get('is_24_hours')
             day_of_week = serializer.validated_data.get('day_of_week')
             start_time = serializer.validated_data.get('start_time')
             end_time = serializer.validated_data.get('end_time')
             etc_reason = serializer.validated_data.get('etc_reason')
             
+            restaurant.is_24_hours = is_24_hours
             restaurant.day_of_week = day_of_week
             restaurant.start_time = start_time
             restaurant.end_time = end_time
@@ -288,6 +281,7 @@ class RestaurantManagementView(APIView):
             return Response({
                 "status": "success",
                 "message":"Update restaurant operating hour successful",
+                "is_24_hours": restaurant.is_24_hours,
                 "day_of_week": restaurant.day_of_week,
                 "start_time": restaurant.start_time,
                 "end_time": restaurant.end_time,

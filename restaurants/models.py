@@ -10,20 +10,15 @@ class Restaurant(models.Model):
     latitude = models.DecimalField(max_digits=10, decimal_places=7)
     location = models.GeometryField(srid=4326)
     address = models.CharField()
+    is_24_hours = models.BooleanField(default=True)
     day_of_week = ArrayField(models.IntegerField())
     start_time = models.TimeField(null=True)
     end_time = models.TimeField(null=True)
     etc_reason = models.TextField(null=True, blank=True)
-
-    queue = models.ManyToManyField(
-        "Reservation",
-        through="ReservationQueue",
-        related_name="restaurant_set",
-        blank=True,
-    )
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    queue = models.ManyToManyField("Reservation", through="ReservationQueue", related_name="restaurant_set", blank=True)
 
     class Meta:
         managed = False
@@ -39,9 +34,7 @@ class Restaurant(models.Model):
 class Reservation(models.Model):
     reservation_id = models.AutoField(primary_key=True)
     restaurant = models.ForeignKey("Restaurant", on_delete=models.CASCADE)
-    user = models.ForeignKey(
-        "users.User", on_delete=models.CASCADE, null=True, blank=True
-    )
+    user = models.ForeignKey("users.User", on_delete=models.CASCADE, null=True, blank=True)
     phone_number = models.CharField(max_length=11, null=True, blank=True)
     reservation_date = models.DateField(auto_now_add=True)
 
@@ -53,9 +46,7 @@ class Reservation(models.Model):
 class ReservationQueue(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
     reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE)
-    user = models.ForeignKey(
-        "users.User", on_delete=models.CASCADE, null=True, blank=True
-    )
+    user = models.ForeignKey("users.User", on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         unique_together = ("reservation", "restaurant")
@@ -70,18 +61,3 @@ class Manager(models.Model):
     class Meta:
         managed = False
         db_table = "Manager"
-
-
-# class OperatingHours(models.Model):
-#     operating_hours_id = models.AutoField(primary_key=True)
-#     restaurant = models.OneToOneField(Restaurant, related_name='_operating_hours', on_delete=models.CASCADE)
-#     day_of_week = models.IntegerField(blank=True, null=True)
-#     start_time = models.DateTimeField(blank=True, null=True)
-#     end_time = models.DateTimeField(blank=True, null=True)
-#     etc_reason = models.TextField(blank=True, null=True)  # This field type is a guess.
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-
-#     class Meta:
-#         managed = False
-#         db_table = "Operating_hours"

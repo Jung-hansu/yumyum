@@ -15,7 +15,7 @@ class RestaurantFilterSerializer(serializers.ModelSerializer):
 class OperatingHourSerializer(serializers.ModelSerializer):
     class Meta:
         model = Restaurant
-        fields = ["day_of_week", "start_time", "end_time", "etc_reason"]
+        fields = ["is_24_hours", "day_of_week", "start_time", "end_time", "etc_reason"]
         
     def validate_day_of_week(self, value :list):
         for i in value:
