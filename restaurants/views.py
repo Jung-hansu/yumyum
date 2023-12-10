@@ -30,8 +30,23 @@ class CreateRestaurantView(APIView):
             request.data["location"] = location
             serializer = RestaurantSerializer(data=request.data)
             if serializer.is_valid():
-                serializer.save()
-                return Response({"message": "Create restaurant successful"}, status=status.HTTP_201_CREATED,)
+                restaurant = serializer.save()
+                return Response(
+                    {
+                        "status": "success",
+                        "message": "Restaurant successfully added",
+                        "data": {
+                            "restaurant_id": restaurant.restaurant_id,
+                            "name": restaurant.name,
+                            "category": restaurant.category,
+                            "longitude": restaurant.longitude,
+                            "latitude": restaurant.latitude,
+                            "address": restaurant.address,
+                            "operating_hours": restaurant.operating_hour,
+                            "created_at": restaurant.created_at,
+                            "updated_at": restaurant.updated_at,
+                        }
+                    }, status=status.HTTP_201_CREATED,)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response({"error": "Unauthorized access"}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -41,13 +56,29 @@ class RestaurantInfoView(APIView):
         restaurant = Restaurant.objects.filter(restaurant_id=restaurant_id).first()
         if restaurant:
             return Response({
-                "name": restaurant.name,
-                "category": restaurant.category,
-                "latitude": restaurant.location[0],
-                "longitude": restaurant.location[1],
-                "waiting": len(restaurant.queue.all()),
-                }, status=status.HTTP_200_OK,)
-        return Response({"error": "Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
+                "status": "success",
+                "message": "Restaurant information retrieved successfully",
+                "data": {
+                    "restaurant_id": restaurant_id,
+                    "name": restaurant.name,
+                    "category": restaurant.category,
+                    "longitude": restaurant.longitude,
+                    "latitude": restaurant.latitude,
+                    "address": restaurant.address,
+                    "operating_hours": restaurant.operating_hour,
+                    "created_at": restaurant.created_at,
+                    "updated_at": restaurant.updated_at,
+                    # "waiting": len(restaurant.queue.all()),
+                }
+            }, status=status.HTTP_200_OK)
+        return Response({
+            "status": "error",
+            "error": {
+                "code": 404,
+                "message": "Not Found",
+                "details": "Restaurant with ID 123 not found."
+            }
+        }, status=status.HTTP_404_NOT_FOUND)
 
 ############## 시간 기준 필터링 기능 추가 필요 ###############
 ############## 크롤링으로 키워드 기반 필터링 기능(분위기, 가격 등) 추가 필요 ###############
@@ -64,28 +95,32 @@ class RestaurantFilterView(APIView):
 
         # 요청에 해당하는 query 작성
         query = Q(name__contains=user_restaurant_name) # 이름 검색
-        query &= Q(location__distance_lte=(user_location, D(km=1)))  # 반경 1km
+        query &= Q(location__distance_lte=(user_location, D(km=0.1)))  # 반경 1km
         for category_id in user_category:
             query &= Q(category__contains=[category_id])
-        now = datetime()
-        print(now)
-
+        # now = datetime()
+        # print(now) ## 시간 기준 검색 활성화하기
+        
         restaurant_infos = []
         restaurants = Restaurant.objects.filter(query)
+        print(len(restaurants))
         for restaurant in restaurants:
             restaurant_info = {
                 "restaurant_id": restaurant.restaurant_id,
                 "name": restaurant.name,
                 "category_ids": restaurant.category,
-                "longitude": restaurant.location[0],
-                "latitude": restaurant.location[1],
-                "waiting": len(restaurant.queue.all()),
+                "address": restaurant.address,
+                "operating_hour": restaurant.operating_hour,
+                # "longitude": restaurant.location[0],
+                # "latitude": restaurant.location[1],
+                # "waiting": len(restaurant.queue.all()),
             }
             restaurant_infos.append(restaurant_info)
         return Response({
+            "status": "success",
             "message": "Nearby restaurants retrieved successfully",
             "restaurant": restaurant_infos,
-            },status=status.HTTP_200_OK)
+        },status=status.HTTP_200_OK)
     
 
 class RestaurantWaitingView(APIView):
@@ -135,9 +170,10 @@ class RestaurantWaitingView(APIView):
         restaurant.save()
         position = len(restaurant.queue.all())
         return Response({
+            "status": "success",
             "message": "Joined the queue successfully.",
             "position": position
-            }, status=status.HTTP_200_OK)
+        }, status=status.HTTP_200_OK)
 
     # 예약 입장(매니저)
     @transaction.atomic

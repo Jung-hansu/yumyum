@@ -1,9 +1,10 @@
-import jwt
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-# from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenViewBase
+from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth import authenticate
 from django.db.models import F
 from django.db import transaction
@@ -15,7 +16,7 @@ from .serializers import *
 from reviews.models import Review
 
 # Create your views here.
-class SignupView(APIView):
+class SignupView(TokenViewBase):
     @transaction.atomic
     def post(self, request):
         serializer = UserSerializer(data=request.data)
@@ -59,14 +60,15 @@ class SignupView(APIView):
                         }
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-            # jwt 토큰 접근
             user = serializer.save()
             user.name = name
             user.save()
             
-            token = TokenObtainPairSerializer.get_token(user)
-            refresh_token = str(token)
-            access_token = str(token.access_token)
+            # jwt 토큰 접근
+            refresh_token = RefreshToken.for_user(user)
+            refresh_token.save()
+            
+            access_token = refresh_token.access_token
             res = Response(
                 {
                     "status": "success",
@@ -74,8 +76,8 @@ class SignupView(APIView):
                     "data": {
                         "user": serializer.data,
                         "token": {
-                            "access": access_token,
-                            "refresh": refresh_token,
+                            "access": str(access_token),
+                            "refresh": str(refresh_token),
                         }
                     }
                 }, status=status.HTTP_201_CREATED)
@@ -88,9 +90,11 @@ class SignupView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class LoginView(APIView):
+class AuthView(TokenViewBase):
+    # 로그인
     @transaction.atomic
     def post(self, request):
+        print(request.user)
         # 중복 로그인 검사
         if request.user.is_authenticated:
             return Response(
@@ -103,17 +107,14 @@ class LoginView(APIView):
                     }
                 }, status=status.HTTP_409_CONFLICT)
 
-        # 로그인
         user = authenticate(request, username=request.data.get('phone_number'), password=request.data.get('password'))
         if user:
             serializer = UserSerializer(user)
             user.last_login = datetime.now()
             user.save()
-            
             # jwt 토큰 접근
-            token = TokenObtainPairSerializer.get_token(user)
-            refresh_token = str(token)
-            access_token = str(token.access_token)
+            refresh_token = TokenObtainPairSerializer.get_token(user)
+            access_token = refresh_token.access_token
             res = Response(
                 {
                     "status": "success",
@@ -121,8 +122,8 @@ class LoginView(APIView):
                     "data": {
                         "user": serializer.data,
                         "token": {
-                            "access": access_token,
-                            "refresh": refresh_token,
+                            "access": str(access_token),
+                            "refresh": str(refresh_token),
                         }
                     }
                 }, status=status.HTTP_200_OK)
@@ -140,32 +141,36 @@ class LoginView(APIView):
                     "details": "The provided phone number or password is invalid",
                 }
             }, status=status.HTTP_400_BAD_REQUEST)
-
-class LogoutView(APIView):
-    @transaction.atomic
-    def post(self, request):
-        user = request.user
-        if not user.is_authenticated:
-            return Response(
-                {
-                    "status": "error",
-                    "error": {
-                        "code": 401,
-                        "message": "Unauthorized",
-                        "details": "JWT validation failed or token is expired",
-                        "suggestion": "Please ensure you have a valid JWT token and try again",
-                    }
-                }, status=status.HTTP_401_UNAUTHORIZED)
         
-        # RefreshToken()
-        res = Response(
+    # 로그아웃
+    @transaction.atomic
+    def delete(self, request):
+        user = request.user
+        print(user)
+        if user.is_authenticated:
+            print(user)
+            refresh_token = request.data.get('refresh')
+            try:
+                RefreshToken(refresh_token).blacklist()
+                res = Response(
+                    {
+                        "status": "success",
+                        "message": "Logout successful",
+                    }, status=status.HTTP_200_OK)
+                res.delete_cookie("access")
+                res.delete_cookie("refresh")
+                return res
+            except TokenError: pass
+        return Response(
             {
-                "status": "success",
-                "message": "Logout successful",
-            }, status=status.HTTP_200_OK)
-        res.delete_cookie("access")
-        res.delete_cookie("refresh")
-        return res
+                "status": "error",
+                "error": {
+                    "code": 401,
+                    "message": "Unauthorized",
+                    "details": "JWT validation failed or token is expired",
+                    "suggestion": "Please ensure you have a valid JWT token and try again",
+                }
+            }, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class UserInfoView(APIView):
@@ -193,7 +198,13 @@ class UserInfoView(APIView):
             }, status=status.HTTP_200_OK)
         return Response(
             {
-                "error":"User has no authorization"}, status=status.HTTP_401_UNAUTHORIZED)
+                "status": "error",
+                "error": {
+                    "code": 401,
+                    "message": "Unauthorized",
+                    "details": "User has no authorization"
+                }
+            }, status=status.HTTP_401_UNAUTHORIZED)
 
     # 유저 삭제
     @transaction.atomic
@@ -246,7 +257,15 @@ class UserWaitingView(APIView):
                 "message": "User position retrieved successfully",
                 "waitings":reservation_list
             }, status=status.HTTP_200_OK)
-        return Response({"error":"Session expired or not found"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {
+                "status": "error",
+                "error": {
+                    "code": 401,
+                    "message": "Unauthorized",
+                    "details": "User not logged in or unauthorized to access this resource"
+                }
+            }, status=status.HTTP_401_UNAUTHORIZED)
     
     # 예약 취소
     @transaction.atomic
@@ -255,13 +274,29 @@ class UserWaitingView(APIView):
         restaurant_id = request.data.get('restaurant_id')
         restaurant = Restaurant.objects.filter(restaurant_id=restaurant_id).first()
         if not restaurant:
-            return Response({"error":"Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                    {
+                        "status": "error",
+                        "error": {
+                            "code": 404,
+                            "message": "Not Found",
+                            "details": "Restaurant not found"
+                        }
+                    }, status=status.HTTP_404_NOT_FOUND)
         
         # 회원
         if user.is_authenticated:
             reservation = Reservation.objects.filter(restaurant=restaurant, user=user).first()
             if not reservation:
-                return Response({"error":"Reservation not found"}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {
+                        "status": "error",
+                        "error": {
+                            "code": 404,
+                            "message": "Not Found",
+                            "details": "Reservation not found or already canceled"
+                        }
+                    }, status=status.HTTP_404_NOT_FOUND)
         # 비회원
         else:
             phone_number = request.data.get('phone_number')
@@ -273,7 +308,14 @@ class UserWaitingView(APIView):
                 return Response({"error":"Reservation not found"}, status=status.HTTP_404_NOT_FOUND)
         
         reservation.delete()
-        return Response({"message":"Reservation cancels successful"}, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "status": "success",
+                "message":"Reservation successfully canceled",
+                "data": {
+                    "reservation_id": reservation.reservation_id
+                }
+            }, status=status.HTTP_200_OK)
     
 class UserReviewListView(APIView):
     def get(self, request, restaurant_id, user_id):
