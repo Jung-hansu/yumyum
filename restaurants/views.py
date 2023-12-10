@@ -68,7 +68,10 @@ class RestaurantInfoView(APIView):
                     "latitude": restaurant.latitude,
                     "address": restaurant.address,
                     "waiting": len(restaurant.queue.all()),
-                    "operating_hours": restaurant.operating_hour,
+                    "day_of_week": restaurant.day_of_week,
+                    "start_time": str(restaurant.start_time.strftime("%H:%M")),
+                    "end_time": str(restaurant.end_time.strftime("%H:%M")),
+                    "etc_reason": restaurant.etc_reason,
                     "created_at": restaurant.created_at,
                     "updated_at": restaurant.updated_at,
                 }
@@ -78,7 +81,7 @@ class RestaurantInfoView(APIView):
             "error": {
                 "code": 404,
                 "message": "Not Found",
-                "details": "Restaurant with ID 123 not found."
+                "details": f"Restaurant with ID {restaurant_id} not found."
             }
         }, status=status.HTTP_404_NOT_FOUND)
 
