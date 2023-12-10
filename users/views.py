@@ -12,6 +12,7 @@ from datetime import datetime
 from restaurants.models import Restaurant, Reservation
 from .models import User
 from .serializers import *
+from reviews.models import Review
 
 # Create your views here.
 class SignupView(APIView):
@@ -273,3 +274,45 @@ class UserWaitingView(APIView):
         
         reservation.delete()
         return Response({"message":"Reservation cancels successful"}, status=status.HTTP_200_OK)
+    
+class UserReviewListView(APIView):
+    def get(self, request, restaurant_id, user_id):
+        user = request.user
+        if user.is_authenticated:
+            if restaurant_id is not None:
+                restaurant = Restaurant.objects.filter(pk = restaurant_id).first() #Restaurant 가져오기
+                user = User.objects.filter(user_id=user_id).first()
+                if not restaurant:
+                    return Response({"error":"Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
+                review_infos = []
+                reviews = Review.objects.filter(restaurant_id = restaurant)
+                for review in reviews:
+                    review_info = {
+                        "review_id": review.review_id,
+                        "restaurant_id" : restaurant.restaurant_id,
+                        "restaurant_name" : restaurant.name,
+                        "stars": review.stars,
+                        "contents": review.contents,
+                        "created_at": review.created_at,
+                        "updated_at": review.updated_at,
+                    }
+                    review_infos.append(review_info)
+                    
+                response_data = {
+                    "user_id" : user.user_id,
+                    "reviews" : review_infos
+                }
+                return Response({"ReviewList" : response_data}, status=status.HTTP_200_OK)
+            return Response({"error" : "Review not found"}, status = status.HTTP_404_NOT_FOUND)
+        
+class DeleteReview(APIView):
+    def delete(self, request, review_id):
+        user = request.user
+        if user.is_authenticated:
+            try:
+                review = Review.objects.get(pk=review_id)
+                review.delete()
+                return Response({"message": "리뷰가 삭제되었습니다."}, status=status.HTTP_204_NO_CONTENT)
+            except Review.DoesNotExist:
+                return Response({"error": "리뷰가 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error":"Session expired or not found"}, status=status.HTTP_400_BAD_REQUEST)

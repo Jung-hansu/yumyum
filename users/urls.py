@@ -9,5 +9,6 @@ urlpatterns = [
     path('logout/', LogoutView.as_view()),
     path('<int:user_id>/', UserInfoView.as_view()),
     path('waitings/', UserWaitingView.as_view()),
-    path('<int:user_id>/reviews/', include('reviews.urls')),    #리뷰로 연결
+    path('<int:user_id>/reviews/', UserReviewListView.as_view()),           #유저 리뷰 조회
+    path('<int:user_id>/reviews/<int:review_id>', DeleteReview.as_view()),  #리뷰 삭제
 ]

@@ -9,6 +9,8 @@ from datetime import datetime
 
 from .serializers import RestaurantSerializer
 from .models import Restaurant, Reservation
+from reviews.models import Review
+from users.models import User
 
 
 # Create your views here.
@@ -194,3 +196,56 @@ class RestaurantManagementView(APIView):
             "message":"Update restaurant operating hour successful",
             "operating_hour":restaurant.operating_hour,
             }, status=status.HTTP_200_OK)
+    
+    
+class RestaurantReviewListView(APIView):
+    def get(self, request, restaurant_id, user_id):
+        user = request.user
+        if user.is_authenticated:
+            if restaurant_id is not None:
+                restaurant = Restaurant.objects.filter(pk = restaurant_id).first() #Restaurant 가져오기
+                user = User.objects.filter(user_id=user_id).first()
+                if not restaurant:
+                    return Response({"error":"Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
+                review_infos = []
+                reviews = Review.objects.filter(restaurant_id = restaurant)
+                for review in reviews:
+                    review_info = {
+                        "review_id": review.review_id,
+                        "stars": review.stars,
+                        "user_id" : user.user_id,
+                        "use_name" : user.name,
+                        "menu" : review.menu,
+                        "contents": review.contents,
+                        "created_at": review.created_at,
+                        "updated_at": review.updated_at,
+                    }
+                    review_infos.append(review_info)
+                    
+                responst_data = {
+                    "restaurant_id" : restaurant.restaurant_id,
+                    "restaurant_name" : restaurant.name,
+                    "reviews" : review_infos
+                }
+                return Response({"ReviewList" : responst_data}, status=status.HTTP_200_OK)
+            return Response({"error" : "Review not found"}, status = status.HTTP_404_NOT_FOUND)
+        
+class WriteReivew(APIView):   
+    def post(self, request):
+        user = request.user
+        if user.is_authenticated:
+            restaurant_id = request.data.get('restaurant_id')
+            restaurant_name = request.data.get('restaurant_name')
+            stars = request.data.get('stars')
+            menu = request.data.get('menu')
+            contents = request.data.get('contents')
+            if not (restaurant_id,restaurant_name,stars,menu,contents):
+                return Response({"error": "평점과 리뷰 내용이 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                restaurant = Restaurant.objects.get(restaurant_id=restaurant_id)
+            except Restaurant.DoesNotExist:
+                return Response({"error": "레스토랑을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+
+            Review.objects.get_or_create(restaurant=restaurant, restaurant_name=restaurant_name, user=user, stars=stars, menu=menu, contents=contents)
+            return Response({"message":"Review regists successfully"}, status=status.HTTP_200_OK)
+        return Response({"error":"Session expired or not found"}, status=status.HTTP_400_BAD_REQUEST)
