@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django.contrib.gis.geos import Point, GEOSGeometry
 from django.contrib.gis.measure import D
-from django.db.models import Q
+from django.db.models import Q, Avg
 from django.db import transaction
 
 from .serializers import RestaurantSerializer, OperatingHourSerializer
@@ -54,14 +54,16 @@ class CreateRestaurantView(APIView):
 
 class RestaurantInfoView(APIView):
     def get(self, request, restaurant_id):
-        restaurant = Restaurant.objects.filter(restaurant_id=restaurant_id).first()
+        restaurant = Restaurant.objects.filter(restaurant_id=restaurant_id).annotate(star_avg=Avg('review__stars')).first()
         if restaurant:
+            star_average = restaurant.star_avg if restaurant.star_avg is not None else 0
             return Response({
                 "status": "success",
                 "message": "Restaurant information retrieved successfully",
                 "data": {
                     "restaurant_id": restaurant_id,
                     "name": restaurant.name,
+                    "star_avg" : star_average,
                     "category": restaurant.category,
                     "longitude": restaurant.longitude,
                     "latitude": restaurant.latitude,
@@ -109,13 +111,14 @@ class RestaurantFilterView(APIView):
             restaurant_info = {
                 "restaurant_id": restaurant.restaurant_id,
                 "name": restaurant.name,
+                "latitude": restaurant.longitude,
+                "longitude": restaurant.latitude,
                 "category_ids": restaurant.category,
                 "address": restaurant.address,
+                "waiting": len(restaurant.queue.all()),
                 "operating_hour": restaurant.operating_hour,
-                # "longitude": restaurant.location[0],
-                # "latitude": restaurant.location[1],
-                # "waiting": len(restaurant.queue.all()),
             }
+            
             restaurant_infos.append(restaurant_info)
         return Response({
             "status": "success",
@@ -289,12 +292,11 @@ class RestaurantManagementView(APIView):
     
     
 class RestaurantReviewListView(APIView):
-    def get(self, request, restaurant_id, user_id):
+    def get(self, request, restaurant_id):
         user = request.user
         if user.is_authenticated:
             if restaurant_id is not None:
                 restaurant = Restaurant.objects.filter(pk = restaurant_id).first() #Restaurant 가져오기
-                user = User.objects.filter(user_id=user_id).first()
                 if not restaurant:
                     return Response({"error":"Restaurant not found"}, status=status.HTTP_404_NOT_FOUND)
                 review_infos = []
@@ -317,25 +319,71 @@ class RestaurantReviewListView(APIView):
                     "restaurant_name" : restaurant.name,
                     "reviews" : review_infos
                 }
-                return Response({"ReviewList" : responst_data}, status=status.HTTP_200_OK)
-            return Response({"error" : "Review not found"}, status = status.HTTP_404_NOT_FOUND)
+                return Response(responst_data, status=status.HTTP_200_OK)
+            error_response = {
+                    "status":"error",
+                    "error" : {
+                        "code": 400,
+                        "message": "Not Found",
+                        "details": "Restaurant with ID 123 not found"
+                    }
+                }
+            return Response(error_response, status = status.HTTP_404_NOT_FOUND)
+        error_response2 = {
+                    "status":"error",
+                    "error" : {
+                        "code": 500,
+                        "message": "Internal Server error",
+                        "details": "An unexpected error occurred while processing your request."
+                    }
+                }
+        return Response(error_response2, status = status.HTTP_404_NOT_FOUND)
         
 class WriteReivew(APIView):   
-    def post(self, request):
+    permission_classes=[AllowAny]
+    @transaction.atomic
+    def post(self, request, restaurant_id):
         user = request.user
         if user.is_authenticated:
-            restaurant_id = request.data.get('restaurant_id')
-            restaurant_name = request.data.get('restaurant_name')
+            name = request.data.get('name')
             stars = request.data.get('stars')
             menu = request.data.get('menu')
             contents = request.data.get('contents')
-            if not (restaurant_id,restaurant_name,stars,menu,contents):
+            if not (name,stars,menu,contents):
                 return Response({"error": "평점과 리뷰 내용이 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
             try:
                 restaurant = Restaurant.objects.get(restaurant_id=restaurant_id)
             except Restaurant.DoesNotExist:
                 return Response({"error": "레스토랑을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+            review, created = Review.objects.get_or_create(restaurant=restaurant, user=user, stars=stars, menu=menu, contents=contents)
+            if created:
 
-            Review.objects.get_or_create(restaurant=restaurant, restaurant_name=restaurant_name, user=user, stars=stars, menu=menu, contents=contents)
-            return Response({"message":"Review regists successfully"}, status=status.HTTP_200_OK)
-        return Response({"error":"Session expired or not found"}, status=status.HTTP_400_BAD_REQUEST)
+                response_data = {
+                    "status": "success",
+                    "message": "Review submitted successfully",
+                    "data": {
+                        "restaurant_id": restaurant.restaurant_id,
+                        "restaurant_name": restaurant.name,
+                        "review_id": review.review_id,
+                        "user_id": user.user_id,
+                        "stars": review.stars,
+                        "menu": review.menu,
+                        "contents": review.contents,
+                        "created_at": review.created_at,
+                        "updated_at": review.updated_at
+                    }
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
+            else:
+                error_response = {
+                    "status":"error",
+                    "error" : {
+                        "code": 400,
+                        "message": "Bad request",
+                        "details": "Failed to submit restaurant review. Please check your input and try again."
+                    }
+                }
+                return Response(error_response, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error : 세션 만료"}, status=status.HTTP_400_BAD_REQUEST)
+        
+            
