@@ -31,7 +31,7 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["yumyum-backend-48405822bc43.herokuapp.com", "localhost"]
+ALLOWED_HOSTS = ["yumyum-backend-48405822bc43.herokuapp.com", "127.0.0.1"]
 
 
 # Application definition
@@ -53,8 +53,6 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
-    
-    #others
     "drf_yasg",
     "corsheaders",
 ]
