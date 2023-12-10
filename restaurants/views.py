@@ -43,7 +43,6 @@ class CreateRestaurantView(APIView):
                             "longitude": restaurant.longitude,
                             "latitude": restaurant.latitude,
                             "address": restaurant.address,
-                            "operating_hours": restaurant.operating_hour,
                             "created_at": restaurant.created_at,
                             "updated_at": restaurant.updated_at,
                         }
@@ -116,7 +115,10 @@ class RestaurantFilterView(APIView):
                 "category_ids": restaurant.category,
                 "address": restaurant.address,
                 "waiting": len(restaurant.queue.all()),
-                "operating_hour": restaurant.operating_hour,
+                "day_of_week": restaurant.day_of_week,
+                "start_time": str(restaurant.start_time.strftime("%H:%M")),
+                "end_time": str(restaurant.end_time.strftime("%H:%M")),
+                "etc_reason": restaurant.etc_reason,
             }
             
             restaurant_infos.append(restaurant_info)
