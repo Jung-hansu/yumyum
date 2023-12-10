@@ -17,7 +17,7 @@ from .serializers import *
 from reviews.models import Review
 
 # Create your views here.
-class SignupView(TokenViewBase):
+class SignupView(APIView):
     @transaction.atomic
     def post(self, request):
         serializer = UserSerializer(data=request.data)
