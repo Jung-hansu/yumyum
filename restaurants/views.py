@@ -12,8 +12,6 @@ from datetime import datetime
 from .serializers import RestaurantSerializer, OperatingHourSerializer
 from .models import Restaurant, Reservation
 from reviews.models import Review
-from users.models import User
-
 
 # Create your views here.
 class CreateRestaurantView(APIView):
@@ -51,7 +49,6 @@ class CreateRestaurantView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response({"error": "Unauthorized access"}, status=status.HTTP_401_UNAUTHORIZED)
 
-
 class RestaurantInfoView(APIView):
     def get(self, request, restaurant_id):
         restaurant = Restaurant.objects.filter(restaurant_id=restaurant_id).annotate(star_avg=Avg('review__stars')).first()
@@ -87,9 +84,7 @@ class RestaurantInfoView(APIView):
             }
         }, status=status.HTTP_404_NOT_FOUND)
 
-############## 시간 기준 필터링 기능 추가 필요 ###############
 ############## 크롤링으로 키워드 기반 필터링 기능(분위기, 가격 등) 추가 필요 ###############
-############## 그 식당이 문을 닫으면 같은 카테고리 식당을 거리기반 정렬해서 추천 #############
 ############## category getlist말고 ','로 나뉜 문자열로 받기 ######################
 class RestaurantFilterView(APIView):
     def get(self, request):
@@ -120,7 +115,7 @@ class RestaurantFilterView(APIView):
             "message": "Nearby restaurants retrieved successfully",
             "restaurants": restaurant_ids,
         },status=status.HTTP_200_OK)
-    
+
 class RestaurantAlternativeView(APIView):
     def get(self, request):
         restaurant_id = request.GET.get('restaurant_id')
@@ -167,7 +162,6 @@ class RestaurantAlternativeView(APIView):
             "message": "Nearby restaurants retrieved successfully",
             "data": restuarant_list
         }, status=status.HTTP_200_OK)
-        
 
 class RestaurantWaitingView(APIView):
     # 식당 웨이팅 조회(유저)
@@ -288,8 +282,7 @@ class RestaurantManagementView(APIView):
                 "etc_reason": restaurant.etc_reason
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    
+
 class RestaurantReviewListView(APIView):
     def get(self, request, restaurant_id):
         user = request.user
@@ -337,7 +330,7 @@ class RestaurantReviewListView(APIView):
                     }
                 }
         return Response(error_response2, status = status.HTTP_404_NOT_FOUND)
-        
+
 class WriteReivew(APIView):   
     permission_classes=[AllowAny]
     @transaction.atomic
@@ -384,5 +377,3 @@ class WriteReivew(APIView):
                 }
                 return Response(error_response, status=status.HTTP_400_BAD_REQUEST)
         return Response({"error : 세션 만료"}, status=status.HTTP_400_BAD_REQUEST)
-        
-            
