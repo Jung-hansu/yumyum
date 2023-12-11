@@ -22,8 +22,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # Naver API key
-NAVER_API_KEY_ID = "oivtdhi7k0"
-NAVER_API_KEY = "KNSTGxil4QoS6iEyK8hWsJirjHzHN6b456QPlnUs"
+NAVER_API_KEY_ID = os.environ['NAVER_API_KEY_ID']
+NAVER_API_KEY = os.environ['NAVER_API_KEY']
+
+AWS_ACCESS_KEY_ID = os.environ['AWS_ACCESS_KEY_ID']
+AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ["SECRET_KEY"]
