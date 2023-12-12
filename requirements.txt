@@ -9,6 +9,8 @@ autobahn==23.6.2
 Automat==22.10.0
 beautifulsoup4==4.12.2
 billiard==4.1.0
+boto3==1.33.11
+botocore==1.33.11
 cache==1.0.3
 celery==5.3.1
 certifi==2023.5.7
@@ -35,9 +37,12 @@ djangorestframework==3.14.0
 djangorestframework-gis==0.18
 djangorestframework-jwt==1.11.0
 djangorestframework-simplejwt==5.3.1
+drf-extra-fields==3.7.0
 drf-yasg==1.21.5
+filetype==1.2.0
 fonttools==4.39.4
 frozenlist==1.4.0
+GDAL==3.8.0
 geographiclib==2.0
 geopy==2.4.1
 gunicorn==21.2.0
@@ -50,6 +55,7 @@ incremental==22.10.0
 inflection==0.5.1
 itypes==1.2.0
 Jinja2==3.1.2
+jmespath==1.0.1
 kiwisolver==1.4.4
 kombu==5.3.1
 lxml==4.9.3
@@ -80,6 +86,7 @@ redis==4.6.0
 requests==2.31.0
 ruamel.yaml==0.17.26
 ruamel.yaml.clib==0.2.7
+s3transfer==0.8.2
 scapy==2.5.0
 service-identity==23.1.0
 six==1.16.0

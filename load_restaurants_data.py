@@ -4,47 +4,46 @@ django.setup()
 
 from django.contrib.gis.geos import GEOSGeometry
 from restaurants.models import Restaurant
-from utils.naver_map_api import geocoding
+from utils import kakao_map_api
 import csv, re
 
 Category_id ={
     "기타":0,
-    "아이스크림":100,
-    "경양식":200,
-    "업태명":300,
-    "호프":400,
-    "외국음식전문점":500,
-    "키즈카페":600,
-    "다방":700,
-    "한식":800,
-    "뷔페식":900,
-    "김밥":1000,
-    "기타 휴게음식점":1100,
-    "까페":1200,
-    "철도역구내":1300,
-    "탕류":1400,
-    "소주방":1500,
-    "일반조리판매":1600,
-    "떡카페":1700,
-    "라이브카페":1800,
-    "냉면집":1900,
-    "출장조리":2000,
-    "분식":2100,
-    "편의점":2200,
-    "과자점":2300,
-    "정종":2400,
-    "중국식":2500,
-    "횟집":2600,
-    "푸드트럭":2700,
-    "패스트푸드":2800,
-    "백화점":2900,
-    "복어취급":3000,
-    "식육":3100,
-    "통닭":3200,
-    "커피숍":3300,
-    "일식":3400,
-    "대포집":3500,
-    "패밀리레스트랑":3600,
+    "아이스크림":800,
+    "경양식":100,
+    "호프":500,
+    "외국음식전문점":400,
+    "키즈카페":-1,
+    "다방":800,
+    "한식":100,
+    "뷔페식":0,
+    "김밥":100,
+    "기타 휴게음식점":0,
+    "까페":800,
+    "철도역구내":-1,
+    "탕류":100,
+    "소주방":500,
+    "일반조리판매":-1,
+    "떡카페":800,
+    "라이브카페":-1,
+    "냉면집":100,
+    "출장조리":700,
+    "분식":600,
+    "편의점":-1,
+    "과자점":800,
+    "정종":500,
+    "중국식":300,
+    "횟집":200,
+    "푸드트럭":700,
+    "패스트푸드":600,
+    "백화점":-1,
+    "복어취급":200,
+    "식육":100,
+    "통닭":100,
+    "커피숍":800,
+    "일식":200,
+    "대포집":500,
+    "패밀리레스트랑":400,
     }
 
 def parse_category(raw_ctgr_names) -> list:
@@ -54,8 +53,10 @@ def parse_category(raw_ctgr_names) -> list:
     category_names = re.sub(pattern, "", raw_ctgr_names)
     categories = category_names.split('/')
     for category in categories:
-        category_ids.append(Category_id.get(category, 0))
-        
+        c_id = Category_id.get(category, -1)
+        if c_id >= 0 and not category_ids.__contains__(c_id):
+            category_ids.append(c_id)
+    category_ids.sort()
     return category_ids
 
 
@@ -66,45 +67,50 @@ def load_restaurants_data():
     # csv 파일 읽기
     with open(csv_path, "r") as f:
         reader = csv.reader(f)
+        header = next(reader, None)
         
-        # Skip header
-        next(reader, None)
-        
-        # csv 데이터를 DB에 삽입
-        cnt = 0
-        unsaved = []
-        for row in reader:
-            cnt += 1
-            name = row[2]
-            category = parse_category(row[6])
-            
-            address = row[4]
-            api_response = geocoding(address)
-            if not api_response:
-                return print("Geocoding error")
-            api_addresses = api_response.get('addresses')
-            if not api_addresses:
-                unsaved.append(row)
-                print(f"{cnt}: {name} not saved.")
-                continue
-            longitude = api_addresses[0].get('x')
-            latitude = api_addresses[0].get('y')
-            location = GEOSGeometry(f"POINT({float(longitude)} {float(latitude)})", srid=4326)
-            
-            new_restaurant, create = Restaurant.objects.get_or_create(
-                name=name,
-                category=category,
-                longitude=longitude,
-                latitude=latitude,
-                location=location,
-                address=address,
+        try:
+            # csv 데이터를 DB에 삽입
+            unsaved = []
+            cnt = 1
+            for row in reader:
+                name = row[2]
+                address = row[4]
+                
+                category = parse_category(row[6])
+                latitude, longitude = kakao_map_api.addr_to_coords(address)
+                if not (category and latitude):
+                    unsaved.append(row)
+                    print(f"{(cnt*100/8528):.2f}% {cnt}: {name} not saved ------------------------!")
+                    cnt += 1
+                    continue
+                location = GEOSGeometry(f"POINT({longitude} {latitude})", srid=4326)
+                
+                new_restaurant, created = Restaurant.objects.get_or_create(
+                    name=name,
+                    category=category,
+                    longitude=longitude,
+                    latitude=latitude,
+                    location=location,
+                    address=address,
                 )
-            new_restaurant.save()
-            print(f"{cnt}: {name} saved.")
-        print("All restaurants are saved successfully.")
-        print("Unsaved restaurants:")
-        print(unsaved)
+                new_restaurant.save()
+                print(f"{(cnt*100/8528):.2f}% {cnt}: {name} saved")
+                cnt += 1
+                
+            print("Restaurants are saved successfully.")
+        except Exception: pass
+        if unsaved:
+            with open("./unsaved_restaurant.csv", "w") as f:
+                f.write(','.join(header)+'\n')
+                for row in unsaved:
+                    if str(row[3]).__contains__(','):
+                        row[3] = f"\"{row[3]}\""
+                    f.write(','.join(row)+'\n')
+            print("Unsaved restaurants:")
+            print(str(unsaved).replace('],','],\n'))
         
 
 if __name__ == "__main__":
     load_restaurants_data()
+    
