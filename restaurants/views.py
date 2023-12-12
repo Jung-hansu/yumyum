@@ -248,6 +248,13 @@ class RestaurantManagerView(APIView):
 
 class RestaurantManagementView(APIView):
     permission_classes = [AllowAny]
+    
+    def post(self, request, restaurant_id):
+        from utils.aws import S3ImgUploader
+        with open("/Users/hansu/Desktop/testPicture.png", "rb") as f:
+            url=S3ImgUploader(f).upload()
+        return Response({"message":"Save successful", "url":url})
+    
     # 식당 정보 변경
     @transaction.atomic
     def put(self, request, restaurant_id):
@@ -377,3 +384,33 @@ class WriteReivew(APIView):
                 }
                 return Response(error_response, status=status.HTTP_400_BAD_REQUEST)
         return Response({"error : 세션 만료"}, status=status.HTTP_400_BAD_REQUEST)
+
+class AllRestaurantInfoView(APIView):
+    def get(self, request):
+        latitude = request.GET.get('latitude')
+        longitude = request.GET.get('longitude')
+        if not (latitude, longitude):
+            return Response({
+                "status": "error",
+                "error": {
+                    "code": 400,
+                    "message": "Bad Request",
+                    "details": "Invalid input",
+                },
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+        user_location = Point((float(longitude), float(latitude)), srid=4326)
+        query = Q(location__distance_lte=(user_location, D(km=0.1)))
+        restaurant_list = []
+        for restaurant in Restaurant.objects.filter(query):
+            restaurant_list.append({
+                "restaurant_id":restaurant.restaurant_id,
+                "category":restaurant.category,
+                "latitude":restaurant.latitude,
+                "longitude":restaurant.longitude,
+            })
+        return Response({
+            "status":"success",
+            "message":"All restaurants retrieved successfully",
+            "data":restaurant_list,
+        }, status=status.HTTP_200_OK)

@@ -11,6 +11,8 @@ urlpatterns = [
     path('<int:restaurant_id>/manage/', RestaurantManagementView.as_view()),   # 식당 관리
     path('<int:restaurant_id>/reviews/', RestaurantReviewListView.as_view()), # 식당 리뷰 조회
     path('<int:restaurant_id>/reviews/write/', WriteReivew.as_view()),        # 리뷰 남기기
+    
+    path('all/', AllRestaurantInfoView.as_view()), # 테스트용
 ]
 
 
