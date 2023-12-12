@@ -10,11 +10,13 @@ class S3ImgUploader:
     def upload(self):
         return self.__upload()
     
-    def upload_review_img(self):
-        return self.__upload('reviews/')
+    def upload_review_img(self, review_id:int=0):
+        dir = f"{dir}/" if review_id > 0 else ""
+        return self.__upload(f'reviews/{dir}')
     
-    def upload_restaurant_img(self):
-        return self.__upload('restaurants/')
+    def upload_restaurant_img(self, restaurant_id:int=0):
+        dir = f"{dir}/" if restaurant_id > 0 else ""
+        return self.__upload(f'restaurants/{dir}')
         
     def __upload(self, dir:str=""):
         s3_client = boto3.client(
@@ -23,8 +25,9 @@ class S3ImgUploader:
             aws_secret_access_key = os.environ['AWS_SECRET_ACCESS_KEY']
         )
         
-        url = self.__set_url(dir)
         content_type, _ = mimetypes.guess_type(self.file.name)
+        file_name, _ = os.path.splitext(os.path.basename(self.file.name))
+        url = 'img/'+dir+file_name+'_'+uuid.uuid1().hex
         s3_client.upload_fileobj(
             self.file, 
             "yumyum-s3-bucket", 
@@ -32,9 +35,3 @@ class S3ImgUploader:
             ExtraArgs={"ContentType": content_type}
         )
         return url
-
-    def __set_url(self, dir:str=""):
-        file_name, _ = os.path.splitext(os.path.basename(self.file.name))
-        url = 'img'+'/'+dir+uuid.uuid1().hex+'_'+file_name
-        return url
-    
