@@ -385,7 +385,7 @@ class WriteReivew(APIView):
                 return Response(error_response, status=status.HTTP_400_BAD_REQUEST)
         return Response({"error : 세션 만료"}, status=status.HTTP_400_BAD_REQUEST)
 
-class AllRestaurantInfoView(APIView):
+class NearbyRestaurantInfoView(APIView):
     def get(self, request):
         latitude = request.GET.get('latitude')
         longitude = request.GET.get('longitude')
@@ -399,10 +399,12 @@ class AllRestaurantInfoView(APIView):
                 },
             }, status=status.HTTP_400_BAD_REQUEST)
             
-        user_location = Point((float(longitude), float(latitude)), srid=4326)
-        query = Q(location__distance_lte=(user_location, D(km=0.1)))
+        user_location = Point((float(latitude), float(longitude)), srid=4326)
+        query = Q(location__distance_lte=(user_location, D(km=0.5)))
+        
+        restaurants = Restaurant.objects.filter(query)
         restaurant_list = []
-        for restaurant in Restaurant.objects.filter(query):
+        for restaurant in restaurants:
             restaurant_list.append({
                 "restaurant_id":restaurant.restaurant_id,
                 "category":restaurant.category,
@@ -412,5 +414,6 @@ class AllRestaurantInfoView(APIView):
         return Response({
             "status":"success",
             "message":"All restaurants retrieved successfully",
+            "count":len(restaurants),
             "data":restaurant_list,
         }, status=status.HTTP_200_OK)
