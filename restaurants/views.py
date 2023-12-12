@@ -395,7 +395,7 @@ class NearbyRestaurantInfoView(APIView):
                 "error": {
                     "code": 400,
                     "message": "Bad Request",
-                    "details": "Invalid input",
+                    "details": "Invalid input data",
                 },
             }, status=status.HTTP_400_BAD_REQUEST)
             
