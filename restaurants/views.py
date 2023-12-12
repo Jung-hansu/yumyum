@@ -414,5 +414,5 @@ class NearbyRestaurantInfoView(APIView):
         return Response({
             "status":"success",
             "message":"All restaurants retrieved successfully",
-            "data":restaurant_list,
+            "restaurants":restaurant_list,
         }, status=status.HTTP_200_OK)
