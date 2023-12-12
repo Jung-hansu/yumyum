@@ -42,7 +42,6 @@ drf-yasg==1.21.5
 filetype==1.2.0
 fonttools==4.39.4
 frozenlist==1.4.0
-GDAL==3.8.0
 geographiclib==2.0
 geopy==2.4.1
 gunicorn==21.2.0
